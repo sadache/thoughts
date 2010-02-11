@@ -39,9 +39,7 @@ let appN f exps= let rec doArgs=
 let rec eval env (ctx:CellContext) (cmap:CalcMap) =
     let applyContextTrans (contextTrans:CellContextTrans) c = contextTrans c
     let buildQueryContext n (Dim2(entityname, year)) =  String.Format("{0}.{1}.{2}", entityname, n, year)
-    let gotogetExp name = if cmap.ContainsKey(name)
-                          then Some(cmap.Item(name))
-                          else None
+    let gotogetExp name = if cmap.ContainsKey(name) then Some(cmap.Item(name)) else None
 
     let gotogetValue name trans (env:Env) = let newCtx = trans ctx
                                             in 
