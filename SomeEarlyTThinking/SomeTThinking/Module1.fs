@@ -65,8 +65,7 @@ let rec eval env (ctx:CellContext) (cmap:CalcMap) =
 
 let nulCellContextTrans (c:CellContext) = c
 
-let previousYearTrans (c:CellContext) = match c with
-                                            Dim2(entityname, year) -> Dim2(entityname, year-1)
+let previousYearTrans (Dim2(entityname, year)) =Dim2(entityname, year-1)
 
 let var a = Binding(a, nulCellContextTrans)
 
