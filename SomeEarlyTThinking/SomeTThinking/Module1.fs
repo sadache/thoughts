@@ -54,7 +54,7 @@ let rec eval env (ctx:CellContext) (cmap:CalcMap) =
                                             | None -> gotogetValue name trans env
               | Plus(e1,e2)-> match((eval env ctx cmap e1,eval env ctx cmap e2)) with
                                     (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (d1+d2)
-                                    |_ -> raise(Exception())
+                                    |_ -> raise(Exception("can add only doubles"))
 
               | Fun(name,e)-> FunVal(env,name,e)
               | App (ef,e1) -> match(eval env ctx cmap ef ) with
