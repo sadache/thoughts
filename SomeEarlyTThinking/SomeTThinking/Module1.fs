@@ -233,9 +233,9 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
         let updateCell (cmap:CalcMap) name c = cmap.update name c
         let gotogetValue name trans (env:Env) = let newCtx = trans ctx
                                                 let ctxQuery = buildContextKey name newCtx
-                                                //attention get here raises exception with no functional meaning
-                                                let cell =  (gotogetExp ctxQuery) |> defaultArg <| ((gotogetExp name) |> Option.get) in 
-                                                    match(cell) with
+                                                //attention "Option.get" here raises exception with no functional meaning
+                                                let cell = let firstTry=gotogetExp ctxQuery in if firstTry.IsSome then firstTry else gotogetExp name in 
+                                                    match(cell |> Option.get) with
                                                             ValuedCell(v, _) -> v
                                                             | NonValuedCell(e) -> 
                                                                     let newEnv= ctxIntoEnv newCtx env
