@@ -9,16 +9,25 @@ type EntityDependencyGraph = Dictionary<Entity, OwnershipRelations>
 and OwnershipRelations = Owns of (Entity * OwnershipRatio) list
 and OwnershipRatio = double
 
+let getEntityRelations (entityGraph:EntityDependencyGraph) entityName = entityGraph.Item(entityName)
 
 type Name= string
 type Year = double //...
 type Month = double //...
+
+
 
 type MatrixContext = CellContext of Dimensions * EntityDependencyGraph
                      | GlobalContext
 and Dimensions = EntityName * Year * Month
 and RelativeEntityTypeLevel = int
 and ContextTrans = MatrixContext -> MatrixContext
+
+let buildContextKey rawkey ctx = match ctx with 
+                                   CellContext((entityname, year, month), _) -> String.Format("{0}.{1}.{2}.{3}", entityname, rawkey, year, month)
+                                   | GlobalContext -> rawkey
+
+let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
 
 type Exp = Const of double
@@ -48,19 +57,18 @@ and TreeNode = Node of TreeNodeKey * AdjacencyList
 and TreeNodeKey = string
 and AdjacencyList = string list
 
-let getEntityRelations (entityGraph:EntityDependencyGraph) entityName = entityGraph.Item(entityName)
 
-let buildContextKey rawkey ctx = match ctx with 
-                                   CellContext((entityname, year, month), _) -> String.Format("{0}.{1}.{2}.{3}", entityname, rawkey, year, month)
-                                   | GlobalContext -> rawkey
 
-let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
+
+
+
 
 let ctxIntoEnv ctx env =    let tenv = if (Map.containsKey("YEAR") env) then (Map.remove("YEAR") env) else env
                             let tenv' = if (Map.containsKey("MONTH") tenv) then (Map.remove("MONTH") tenv) else tenv // ... :-(
                             match ctx with
                             CellContext((_, y, m), _) -> Map.add "MONTH" (DoubleVal(m)) (Map.add "YEAR" (DoubleVal(y)) tenv')
                             |_-> env
+
 
 type CalcMap = class
     val _cells : Dictionary<Name, Cell>
@@ -218,34 +226,25 @@ let appN f exps= let rec doArgs exps= match exps with   |(head::[])-> App(f, hea
 let max (a:double) (b:double) = Math.Max(a,b)
 let min (a:double) (b:double) = Math.Min(a,b)
 
+
+
 let rec eval env (cmap:CalcMap) (ctx:MatrixContext) = 
         let gotogetExp name = cmap.findByKey(name)
         let updateCell (cmap:CalcMap) name c = cmap.update name c
         let gotogetValue name trans (env:Env) = let newCtx = trans ctx
-                                                in
                                                 let ctxQuery = buildContextKey name newCtx
-                                                in 
-                                                    let cell = gotogetExp ctxQuery
+                                                //attention get here raises exception with no functional meaning
+                                                let cell =  (gotogetExp ctxQuery) |> defaultArg <| ((gotogetExp name) |> Option.get) in 
                                                     match(cell) with
-                                                            Some(ValuedCell(v, e)) -> v
-                                                            | Some(NonValuedCell(e)) -> 
-                                                                                    let newEnv= ctxIntoEnv newCtx env
-                                                                                    let v = eval newEnv cmap newCtx e
-                                                                                    updateCell cmap ctxQuery (ValuedCell(v, e))
-                                                                                    v
-                                                            | Some(FixedCell(v)) -> v
-                                                            | Some(EmptyCell) -> DoubleVal(0.)
-                                                            | None -> let cell = gotogetExp name
-                                                                      match(cell) with
-                                                                      Some(ValuedCell(v, e)) -> v
-                                                                      | Some(NonValuedCell(e)) -> 
-                                                                                    let newEnv= ctxIntoEnv newCtx env
-                                                                                    let v = eval newEnv cmap newCtx e
-                                                                                    updateCell cmap ctxQuery (ValuedCell(v, e))
-                                                                                    v
-                                                                      | Some(FixedCell(v)) -> v
-                                                                      | Some(EmptyCell) -> DoubleVal(0.)
-                                                                      | _ -> raise (Exception())
+                                                            ValuedCell(v, _) -> v
+                                                            | NonValuedCell(e) -> 
+                                                                    let newEnv= ctxIntoEnv newCtx env
+                                                                    let v = eval newEnv cmap newCtx e
+                                                                    updateCell cmap ctxQuery (ValuedCell(v, e))
+                                                                    v
+                                                            | FixedCell(v) -> v
+                                                            | EmptyCell -> DoubleVal(0.)
+
         let app op a b = match((eval (ctxIntoEnv ctx env) cmap ctx a,eval (ctxIntoEnv ctx env) cmap ctx b)) with
                                                     (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
                                                     |_ -> raise(Exception())
