@@ -2,6 +2,8 @@ module Module1
 open System
 open System.Collections.Generic
 
+let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Value
+
 type Entity = EntityName 
 and EntityName= string
 
@@ -234,8 +236,9 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
         let gotogetValue name trans (env:Env) = let newCtx = trans ctx
                                                 let ctxQuery = buildContextKey name newCtx
                                                 //attention "Option.get" here raises exception with no functional meaning
-                                                let cell = let firstTry=gotogetExp ctxQuery in if firstTry.IsSome then firstTry else gotogetExp name in 
-                                                    match(cell |> Option.get) with
+                                                let cell = let firstTry=gotogetExp ctxQuery in 
+                                                             firstTry |> getOrElse <| lazy((gotogetExp name).Value) in 
+                                                    match(cell) with
                                                             ValuedCell(v, _) -> v
                                                             | NonValuedCell(e) -> 
                                                                     let newEnv= ctxIntoEnv newCtx env
@@ -252,9 +255,7 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
         function 
                  Const (d)-> DoubleVal d
                  | Binding (name, trans) -> let newEnv= ctxIntoEnv ctx env
-                                            match(newEnv.TryFind(name)) with
-                                            Some(v) -> v
-                                            | None -> gotogetValue name trans newEnv
+                                            newEnv.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans newEnv)
                  | Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match ctx with
                                                                                          CellContext((n, y, m), g) -> ((n, y, m), g)
