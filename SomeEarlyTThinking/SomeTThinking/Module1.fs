@@ -2,7 +2,7 @@ module Module1
 open System
 open System.Collections.Generic
 
-let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Value
+let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Force()
 
 type Entity = EntityName 
 and EntityName= string
@@ -281,10 +281,11 @@ let rec eval env  (ctx:MatrixContext) =
                                      |_ -> raise (Exception())
 
 and calcStore= new Dictionary<string,Exp>()
+and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
 and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Value>() 
 and storeCache (key,context) env=let qualifiedKey= buildContextKey key context in
-                                        cache.GetOrAdd(qualifiedKey, fun k-> eval env context calcStore.[qualifiedKey]) 
+                                        cache.GetOrAdd(qualifiedKey, fun k-> eval env context (match getCalcFromStore qualifiedKey with Some e -> e| None->Option.get (getCalcFromStore key)))
 
 let (<+>) a b = Plus (a,b)
 let ($) = appN
@@ -345,13 +346,15 @@ let natureX2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureX")
 let natureX2012_ = eval env0 (cellCtx "entity1" 2012 1) (var "natureX")
 
 // a default formula must be used if no formula is defined for the nature & cell context : here natureX from GlobalContext 
-let natureX2013_ = eval env0 (cellCtx "entity1" 2013 1) (var ("natureX"))
+
 let natureX2013 = eval env0 (cellCtx "entity1" 2013 1) (var "natureX")
 let natureX2014 = eval env0 (cellCtx "entity1" 2014 1) (var "natureX")
 let natureX2015 = eval env0 (cellCtx "entity1" 2015 1) (var "natureX")
 let natureX2016 = eval env0 (cellCtx "entity1" 2016 1) (var "natureX")
 
 // can navigate among natures and time
+//TODO strange I had to add the following line that it passes, it makes sence for the model in my head but strangely works fine in the other version
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2009 1, "charges"), Const -10.) 
 let natureYY2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
