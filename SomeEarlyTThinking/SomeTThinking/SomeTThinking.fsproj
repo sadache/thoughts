@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5e75fd86-3910-484b-9690-4bdcf2b2b620}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>SomeTThinking</RootNamespace>
     <AssemblyName>SomeTThinking</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
