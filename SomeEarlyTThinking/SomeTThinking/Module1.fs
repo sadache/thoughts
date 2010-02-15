@@ -31,7 +31,6 @@ let buildContextKey rawkey  =
 
 let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
-
 type Exp = Const of double
            |Binding of Name * ContextTrans
            |Children of Fold * Exp
