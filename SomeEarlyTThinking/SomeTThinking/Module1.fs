@@ -284,8 +284,13 @@ and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
 and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Value>() 
-and storeCache (key,context) env=let qualifiedKey= buildContextKey key context in
-                                        cache.GetOrAdd(qualifiedKey, fun k-> eval env context ( getCalcFromStore qualifiedKey |> getOrElse <| lazy(Option.get (getCalcFromStore key))))
+and storeCache (key,context) env=
+            let qualifiedKey= buildContextKey key context in
+                                cache.GetOrAdd(qualifiedKey,
+                                     fun k-> eval env context 
+                                              ( getCalcFromStore qualifiedKey 
+                                                 |> getOrElse 
+                                                 <| lazy(Option.get (getCalcFromStore key))))
 
 let (<+>) a b = Plus (a,b)
 let ($) = appN
