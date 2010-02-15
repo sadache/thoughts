@@ -229,6 +229,7 @@ let appN f exps= let rec doArgs exps= match exps with   |(head::[])-> App(f, hea
                                                         |_ -> raise (Exception()) 
                    in doArgs exps
 
+
 let max (a:double) (b:double) = Math.Max(a,b)
 let min (a:double) (b:double) = Math.Min(a,b)
 
@@ -335,7 +336,7 @@ calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureX"), (Binding("natureX", previousYearTrans)))
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureX"), (Binding("natureX", previousYearTrans)))
 
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureYY"), (Binding ("natureX",previousYearTrans)) )
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureYY"), (var ("natureX")) )
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureYY"), (Binding("natureYY", previousYearTrans)))
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureYY"), (Binding("natureYY", previousYearTrans)) )
 
