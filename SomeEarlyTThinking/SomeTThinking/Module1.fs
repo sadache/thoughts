@@ -359,8 +359,7 @@ let natureX2015 = eval env0 (cellCtx "entity1" 2015 1) (var "natureX")
 let natureX2016 = eval env0 (cellCtx "entity1" 2016 1) (var "natureX")
 
 // can navigate among natures and time
-//TODO strange I had to add the following line that it passes, it makes sence for the model in my head but strangely works fine in the other version
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2009 1, "charges"), Const -10.) 
+
 let natureYY2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
