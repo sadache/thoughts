@@ -31,7 +31,9 @@ let buildContextKey rawkey  =
 
 let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
+type ContextDimensions= Year| Month
 type Exp = Const of double
+           |Context of ContextDimensions
            |Ref of Name * ContextTrans //refs are evil
            |Binding of Name
            |Children of Fold * Exp
@@ -45,20 +47,9 @@ type Exp = Const of double
 and Fold = Sum
            | Avg
 
-type Env= Map<Name,Value>
+type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
-
-let ctxIntoEnv ctx env =    let tenv = if (Map.containsKey("YEAR") env) then (Map.remove("YEAR") env) else env
-                            let tenv' = if (Map.containsKey("MONTH") tenv) then (Map.remove("MONTH") tenv) else tenv // ... :-(
-                            match ctx with
-                            CellContext((_, y, m), _) -> Map.add "MONTH" (DoubleVal(m)) (Map.add "YEAR" (DoubleVal(y)) tenv')
-                            |_-> env
-
-
-
-
-        
 
 let funN args exp= let rec doArgs = function  |(head::[])-> Fun(head,exp)
                                               |(h::tail) -> Fun(h,doArgs tail)
@@ -79,21 +70,21 @@ type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
 
 
-let rec eval env  (ctx:MatrixContext) = 
-        let gotogetValue name trans (env:Env) = let newCtx = trans ctx
-                                                in storeCache (name, newCtx) env
+let rec eval (env :Env) = 
+        let gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
+                                                in storeCache (name, newEnv.context) newEnv.bindigs
 
-        let app op a b = match((eval (ctxIntoEnv ctx env)  ctx a,eval (ctxIntoEnv ctx env)  ctx b)) with
+        let app op a b = match((eval env a,eval env b)) with
                                                     (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
-                                                    |_ -> raise(Exception())
+                                                    |(v1,v2) -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , ([|op  ; v1; v2 |]:Object[]) ))
         in
         function 
                  Const (d)-> DoubleVal d
-                 |Ref(name,trans)-> let newEnv= ctxIntoEnv ctx env in
-                                            newEnv.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans newEnv)
-                 | Binding name -> env.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
+                 | Context dimension -> raise(NotImplementedException())
+                 |Ref(name,trans)-> env.bindigs.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans env  )
+                 | Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
                  | Children(fold, e) -> 
-                                            let ((entityname,year,month),entitygraph)  = match ctx with
+                                            let ((entityname,year,month),entitygraph)  = match env.context with
                                                                                          CellContext((n, y, m), g) -> ((n, y, m), g)
                                                                                          |_->raise(Exception())
                                             let ownership = match getEntityRelations entitygraph entityname with Owns(list) -> list
@@ -104,8 +95,8 @@ let rec eval env  (ctx:MatrixContext) =
                                                     match list with
                                                     (owned,r)::t -> 
                                                         let newCtx = CellContext((owned, year, month), entitygraph)
-                                                        let newEnv= ctxIntoEnv newCtx env
-                                                        match (eval newEnv newCtx e) with
+                                                        let newEnv= {env with context= newCtx}
+                                                        match (eval newEnv e) with
                                                         DoubleVal(d1) -> foldsum t (acc + (d1*r))
                                                         |_->raise(Exception())
                                                     |[]-> DoubleVal(acc)
@@ -116,10 +107,10 @@ let rec eval env  (ctx:MatrixContext) =
                  | Max(e1, e2) -> app max e1 e2
                  | Min(e1, e2) -> app min e1 e2
                  | Fun(name,e)-> FunVal(env,name,e)
-                 | App (ef,e1) ->  match(eval (ctxIntoEnv ctx env) ctx ef) with
+                 | App (ef,e1) ->  match(eval env ef) with
                                      FunVal(env,name,e)->
-                                        let newEnv=Map.add name (eval (ctxIntoEnv ctx env) ctx e1) env
-                                        in eval newEnv ctx e
+                                        let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
+                                        in eval newEnv e
                                      |_ -> raise (Exception())
 
 and calcStore= new Dictionary<string,Exp>()
@@ -129,26 +120,26 @@ and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Value>()
 and storeCache (key,context) env=
             let qualifiedKey= buildContextKey key context in
                                 cache.GetOrAdd(qualifiedKey,
-                                     fun k-> eval env context 
+                                     fun k-> eval {bindigs=env ;context=context} 
                                               ( getCalcFromStore qualifiedKey 
                                                  |> getOrElse 
                                                  <| lazy(Option.get (getCalcFromStore key))))
 
 let (<+>) a b = Plus (a,b)
 let ($) = appN
+let id i=i
+let nulContextTrans: ContextTrans  = id
+let previousYearTrans :ContextTrans = function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
+                                               | c -> c
 
-let nulContextTrans (c:MatrixContext) = c
-let previousYearTrans (c:MatrixContext) = match c with
-                                          CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
-                                          | _ -> c
 let globalYearTrans _= GlobalContext
 let var a = Ref(a, nulContextTrans)
 
 // Samples
  
 //let calcMap = CalcMap()
-let env0:Env= Map.empty
-
+let bindings0= Map.empty
+let env0With context= {bindigs= bindings0; context=context}
 
 let entityGraph = EntityDependencyGraph()
 entityGraph.Add("CompanyZ", Owns([]))
@@ -173,6 +164,7 @@ calcStore.Add (qualifiedKey (cellCtx "entity1" 2016 1, "charges" ),Const -50.)
 
 
 calcStore.Add (qualifiedKey (GlobalContext, "natureX"), (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; var "rent"])) 
+
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"; "c"] (var "a" <+> var "b" <+> var "c") $ [var "charges"; Ref("rent", previousYearTrans); var "works"])
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureX"), (Ref("natureX", previousYearTrans)))
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureX"), (Ref("natureX", previousYearTrans)))
@@ -183,45 +175,45 @@ calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureYY"), (Ref("natureY
 
 
 // simple calculation
-let natureX2010 = eval env0 (cellCtx "entity1" 2010 1) (var "natureX")
+let natureX2010 = eval <| env0With (cellCtx "entity1" 2010 1) <|(var "natureX")
 // should not be reevaluated twice
-let natureX2010_ = eval env0 (cellCtx "entity1" 2010 1) (var "natureX")
+let natureX2010_ = eval <| env0With (cellCtx "entity1" 2010 1) <| (var "natureX")
 
 // calculation based on anther cell context (allows time and dimensions browsing)
-let natureX2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureX")
+let natureX2012 = eval <| env0With (cellCtx "entity1" 2012 1) <|(var "natureX")
 // again, should not be reevaluated twice
-let natureX2012_ = eval env0 (cellCtx "entity1" 2012 1) (var "natureX")
+let natureX2012_ = eval <| env0With (cellCtx "entity1" 2012 1) <| (var "natureX")
 
 // a default formula must be used if no formula is defined for the nature & cell context : here natureX from GlobalContext 
 
-let natureX2013 = eval env0 (cellCtx "entity1" 2013 1) (var "natureX")
-let natureX2014 = eval env0 (cellCtx "entity1" 2014 1) (var "natureX")
-let natureX2015 = eval env0 (cellCtx "entity1" 2015 1) (var "natureX")
-let natureX2016 = eval env0 (cellCtx "entity1" 2016 1) (var "natureX")
+let natureX2013 = eval <| env0With (cellCtx "entity1" 2013 1) <| (var "natureX")
+let natureX2014 = eval <| env0With (cellCtx "entity1" 2014 1) <| (var "natureX")
+let natureX2015 = eval <| env0With (cellCtx "entity1" 2015 1) <| (var "natureX")
+let natureX2016 = eval <| env0With (cellCtx "entity1" 2016 1) <| (var "natureX")
 
 // can navigate among natures and time
 
-let natureYY2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
+let natureYY2012 = eval <| env0With (cellCtx "entity1" 2012 1) <| (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
 calcStore.[qualifiedKey (cellCtx "entity1" 2010 1, "natureX")] <- (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; Ref("rent", previousYearTrans)])
-let natureYY2012_ = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
+let natureYY2012_ = eval <| env0With (cellCtx "entity1" 2012 1) <| (var "natureYY")
 
 
 // holding rent is calculated based on children rents, using an aggregation function (Sum)
 calcStore.Add (qualifiedKey(cellCtx "CompanyA" 2009 1, "rent"), Const 100.) 
 calcStore.Add (qualifiedKey(cellCtx "Holding" 2010 1, "rent"), (Children(Sum, Ref("rent", previousYearTrans)))) 
-let holdingrent = eval env0 (cellCtx "Holding" 2010 1) (var "rent")
+let holdingrent = eval <| env0With (cellCtx "Holding" 2010 1) <| (var "rent")
 
 
 // holding rent is calculated taking in account ownership ratio of children
 calcStore.Add (qualifiedKey(cellCtx "CompanyW" 2009 1, "rent"), Const 100.) 
 calcStore.Add (qualifiedKey(cellCtx "CompanyZ" 2009 1, "rent"), Const 900.) 
 calcStore.Add (qualifiedKey(cellCtx "OtherHolding" 2010 1, "rent"), (Children(Sum, Ref("rent", previousYearTrans))))
-let otherholdingrent = eval env0 (cellCtx "OtherHolding" 2010 1) (var "rent")
+let otherholdingrent = eval <| env0With (cellCtx "OtherHolding" 2010 1)<| (var "rent")
 
 // allow using YEAR in the formula as a reference to the contextual date
-let testYEAR = eval env0 (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (var "a" <+> var "b") $ [var "YEAR"; Const(10.)])
+let testYEAR = eval <| env0With (cellCtx "Holding" 2010 1) <| (funN ["a"; "b"] (var "a" <+> var "b") $ [Context Year; Const(10.)])
 
 
 
