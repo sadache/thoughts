@@ -46,12 +46,13 @@ type Exp = Const of double
            |Fun of Name * Exp
            |App of Exp * Exp
 
-and Fold = Sum
-           | Avg
+and Fold = Sum | Avg
 
 type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
+
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
+
 let funN = List.foldBack <| curry2 Fun 
 let appN f exps= (List.foldBack <| fun arg f' -> App( f', arg)) exps f
 // could do: let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
@@ -106,7 +107,7 @@ let rec eval (env :Env) =
                                      FunVal(env,name,e)->
                                         let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
                                         in eval newEnv e
-                                     |_ -> raise (Exception())
+                                     |exp -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , exp ))
 
 and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
