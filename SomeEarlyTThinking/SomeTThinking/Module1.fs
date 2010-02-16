@@ -4,6 +4,7 @@ open System.Collections.Generic
 
 let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Force()
 let curry2 f = fun a b -> f(a,b)
+let reverse f = fun b a-> f a b
 
 type Entity = EntityName 
 and EntityName= string
@@ -51,10 +52,9 @@ and Fold = Sum
 type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
-let reverse f = fun b a-> f a b
 let funN = List.foldBack <| curry2 Fun 
 let appN f exps= (List.foldBack <| fun arg f' -> App( f', arg)) exps f
-// could do let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
+// could do: let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
 
 let max (a:double) (b:double) = Math.Max(a,b)
 let min (a:double) (b:double) = Math.Min(a,b)
