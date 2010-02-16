@@ -79,11 +79,13 @@ let rec eval (env :Env) =
                                                     |(v1,v2) -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , ([|op  ; v1; v2 |]:Object[]) ))
         in
         function 
-                 Const (d)-> DoubleVal d
-                 | Context dimension -> raise(NotImplementedException())
+                  Const (d)-> DoubleVal d
+                 |Context dimension-> match (dimension,env.context) with (Year ,CellContext ((_, y, _), _)) ->  DoubleVal y 
+                                                                        |(Month,CellContext ((_, _, m), _)) -> DoubleVal m
+                                                                         |(_,GlobalContext) -> raise (InvalidProgramException("global context does not contain the demanded dimension"))
                  |Ref(name,trans)-> env.bindigs.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans env  )
-                 | Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
-                 | Children(fold, e) -> 
+                 |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
+                 |Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match env.context with
                                                                                          CellContext((n, y, m), g) -> ((n, y, m), g)
                                                                                          |_->raise(Exception())
