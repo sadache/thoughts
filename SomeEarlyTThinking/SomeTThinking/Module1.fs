@@ -49,23 +49,6 @@ type Env= Map<Name,Value>
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
 
-type Cell = EmptyCell
-            | ValuedCell of Value * Exp 
-            | NonValuedCell of Exp
-            | FixedCell of Value 
-
-
-type DependencyTree = Dictionary<TreeNodeKey, TreeNode>
-and TreeNode = Node of TreeNodeKey * AdjacencyList
-and TreeNodeKey = string
-and AdjacencyList = string list
-
-
-
-
-
-
-
 let ctxIntoEnv ctx env =    let tenv = if (Map.containsKey("YEAR") env) then (Map.remove("YEAR") env) else env
                             let tenv' = if (Map.containsKey("MONTH") tenv) then (Map.remove("MONTH") tenv) else tenv // ... :-(
                             match ctx with
@@ -77,14 +60,14 @@ let ctxIntoEnv ctx env =    let tenv = if (Map.containsKey("YEAR") env) then (Ma
 
         
 
-let funN args exp= let rec doArgs args= match args with |(head::[])-> Fun(head,exp)
-                                                        |(h::tail) -> Fun(h,doArgs tail)
-                                                        |_ -> raise (Exception()) 
+let funN args exp= let rec doArgs = function  |(head::[])-> Fun(head,exp)
+                                              |(h::tail) -> Fun(h,doArgs tail)
+                                              |_ -> raise (Exception()) 
                    in doArgs args
 
-let appN f exps= let rec doArgs exps= match exps with   |(head::[])-> App(f, head)
-                                                        |(h::tail) -> App(doArgs tail, h)
-                                                        |_ -> raise (Exception()) 
+let appN f exps= let rec doArgs = function |(head::[])-> App(f, head)
+                                            |(h::tail) -> App(doArgs tail, h)
+                                            |_ -> raise (Exception()) 
                    in doArgs exps
 
 
@@ -97,9 +80,8 @@ type QualifiedName=  MatrixContext * String
 
 
 let rec eval env  (ctx:MatrixContext) = 
-        let gotogetExp name = storeCache name
         let gotogetValue name trans (env:Env) = let newCtx = trans ctx
-                                                in gotogetExp (name, newCtx) env
+                                                in storeCache (name, newCtx) env
 
         let app op a b = match((eval (ctxIntoEnv ctx env)  ctx a,eval (ctxIntoEnv ctx env)  ctx b)) with
                                                     (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
