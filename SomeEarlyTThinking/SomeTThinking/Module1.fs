@@ -3,6 +3,7 @@ open System
 open System.Collections.Generic
 
 let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Force()
+let curry2 f = fun a b -> f(a,b)
 
 type Entity = EntityName 
 and EntityName= string
@@ -50,17 +51,10 @@ and Fold = Sum
 type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
-
-let funN args exp= let rec doArgs = function  |(head::[])-> Fun(head,exp)
-                                              |(h::tail) -> Fun(h,doArgs tail)
-                                              |_ -> raise (Exception()) 
-                   in doArgs args
-
-let appN f exps= let rec doArgs = function |(head::[])-> App(f, head)
-                                            |(h::tail) -> App(doArgs tail, h)
-                                            |_ -> raise (Exception()) 
-                   in doArgs exps
-
+let reverse f = fun b a-> f a b
+let funN = List.foldBack <| curry2 Fun 
+let appN f exps= (List.foldBack <| fun arg f' -> App( f', arg)) exps f
+// could do let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
 
 let max (a:double) (b:double) = Math.Max(a,b)
 let min (a:double) (b:double) = Math.Min(a,b)
@@ -75,11 +69,10 @@ let rec eval (env :Env) =
                                                 in storeCache (name, newEnv.context) newEnv.bindigs
 
         let app op a b = match((eval env a,eval env b)) with
-                                                    (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
-                                                    |(v1,v2) -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , ([|op  ; v1; v2 |]:Object[]) ))
+                            (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
+                            |(v1,v2) -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , ([|op  ; v1; v2 |]:Object[]) ))
         in
-        function 
-                  Const (d)-> DoubleVal d
+        function Const (d)-> DoubleVal d
                  |Context dimension-> match (dimension,env.context) with (Year ,CellContext ((_, y, _), _)) ->  DoubleVal y 
                                                                         |(Month,CellContext ((_, _, m), _)) -> DoubleVal m
                                                                          |(_,GlobalContext) -> raise (InvalidProgramException("global context does not contain the demanded dimension"))
