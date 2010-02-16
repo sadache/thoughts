@@ -32,7 +32,8 @@ let buildContextKey rawkey  =
 let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
 type Exp = Const of double
-           |Binding of Name * ContextTrans
+           |Ref of Name * ContextTrans //refs are evil
+           |Binding of Name
            |Children of Fold * Exp
            |Plus of Exp * Exp
            |Times of Exp * Exp
@@ -40,6 +41,7 @@ type Exp = Const of double
            |Max of Exp * Exp
            |Fun of Name * Exp
            |App of Exp * Exp
+
 and Fold = Sum
            | Avg
 
@@ -73,149 +75,6 @@ let ctxIntoEnv ctx env =    let tenv = if (Map.containsKey("YEAR") env) then (Ma
 
 
 
-
-
-type CalcMap = class
-    val _cells : Dictionary<Name, Cell>
-    val _cellsDependents : DependencyTree
-    val _cellsDependees : DependencyTree
-    
-    member x.update name cell = 
-        x._cells.Item(name) <- cell
-    
-    member x.findByKey name =
-        if x._cells.ContainsKey(name)
-                    then Some(x._cells.Item(name))
-                    else None
-    
-    member x.registerVal context rawkey value = 
-        let ctxKey = buildContextKey rawkey context
-        in
-        x._cells.Add(ctxKey, FixedCell(value))
-
-    member x.registerExp context rawkey exp dependees = 
-        let ctxKey = buildContextKey rawkey context
-        in
-        x._cells.Add(ctxKey, NonValuedCell(exp))
-        x.setNodeDependees context ctxKey dependees
-        x.setNodeAsDependentToDependees context ctxKey dependees
-    
-    member x.changeTo context rawkey exp dependees = 
-        let ctxKey = buildContextKey rawkey context
-        in
-        let preChangeDependents =
-            match (x._cellsDependents.Item(ctxKey)) with
-            Node(_, adj) -> adj
-        x.removeNodeDependencies context ctxKey
-        x.setNodeDependees context ctxKey dependees
-        x.setNodeAsDependentToDependees context ctxKey dependees
-        x._cells.Item(ctxKey) <- NonValuedCell(exp)
-        x.propagateChangeToDependents preChangeDependents
-        
-    member private x.setNodeDependees context ctxKey (dependees: Exp list) =
-        x._cellsDependees.Item(ctxKey) <- Node(ctxKey, [])
-        let rec setDependees ctx deps =
-            match deps with
-            head::tail -> 
-                        x.setNodeDependee ctxKey head ctx 
-                        setDependees ctx tail
-            |[] -> ()
-        setDependees context dependees
-    
-    member private x.setNodeDependee nodeKey bindingasexp context = 
-        match(bindingasexp) with
-        Binding(name, trans)-> 
-                        let newCtx = applyContextTrans trans context
-                        in 
-                        let ctxKey = buildContextKey name newCtx
-                        in                        
-                        match x._cellsDependees.Item(nodeKey) with
-                        Node(_, adj) -> x._cellsDependees.Item(nodeKey)  <- Node(nodeKey, adj@[ctxKey])
-        | Children(_, e) ->  
-                                match(context) with
-                                CellContext((entityname, year, month), graph) ->
-                                        let children = match (getEntityRelations graph entityname) with Owns(list) -> list
-                                        in
-                                        let rec setChildren list =
-                                            match list with
-                                            (childentity,_)::t -> 
-                                                        x.setNodeDependee nodeKey e (CellContext((childentity, year, month), graph))
-                                                        setChildren t
-                                            |[]->()
-                                        setChildren children
-                                |_-> raise(Exception())
-        |_-> raise(Exception())
-    
-    member private x.setNodeAsDependentToDependees context nodeAsDependentCtxKey (dependees: Exp list) =
-        let rec setAsDependent ctx deps =
-            match deps with
-            head::tail -> 
-                        x.setNodeAsDependent nodeAsDependentCtxKey head ctx 
-                        setAsDependent ctx tail
-            |[] -> ()
-        setAsDependent context dependees
-        
-
-    member private x.setNodeAsDependent nodeAsDependentCtxKey exp context = 
-        match(exp) with
-        Binding(name, trans)-> 
-                        let newCtx = applyContextTrans trans context
-                        in 
-                        let ctxKey = buildContextKey name newCtx
-                        in
-                        if (x._cellsDependents.ContainsKey(ctxKey)=false)
-                        then x._cellsDependents.Add(ctxKey, Node(ctxKey, [nodeAsDependentCtxKey]))
-                        else
-                            match (x._cellsDependents.Item(ctxKey)) with
-                            Node(_, adj) ->  x._cellsDependents.Item(ctxKey) <- Node(ctxKey, adj@[nodeAsDependentCtxKey])
-        | Children(_, e) ->     
-                            match(context) with
-                            CellContext((entityname, year, month), graph) ->
-                                    let children = match (getEntityRelations graph entityname) with Owns(list) -> list
-                                    in
-                                    let rec setNodeForChildren list =
-                                        match list with
-                                        (childentity,_)::t -> 
-                                                        x.setNodeAsDependent nodeAsDependentCtxKey e (CellContext((childentity, year, month), graph))
-                                                        setNodeForChildren t
-                                        |[]->()
-                                    setNodeForChildren children 
-                                |_-> raise(Exception())
-        |_ -> raise(Exception())
-
-    
-    member private x.removeNodeDependencies context nodeAsDependentCtxKey =
-        if x._cellsDependees.ContainsKey(nodeAsDependentCtxKey)
-        then 
-            let rec removeDep adj =
-                match adj with
-                head::tail -> 
-                        match x._cellsDependents.Item(head) with
-                        Node(_, adj) -> x._cellsDependents.Item(head) <- Node(head, List.filter(fun s -> s=nodeAsDependentCtxKey) adj)
-                                        removeDep tail
-                |[] -> ()
-            match x._cellsDependees.Item(nodeAsDependentCtxKey) with
-            Node(_, adj) -> removeDep adj
-        x._cellsDependees.Item(nodeAsDependentCtxKey) <- Node(nodeAsDependentCtxKey, [])     
-    
-
-    member private x.propagateChangeToDependents (dependents:AdjacencyList) =
-         let rec propagateChange (dependentsadj:AdjacencyList) = 
-            match dependentsadj with
-            head::tail -> match x._cells.Item(head) with
-                                ValuedCell(value, exp) -> x._cells.Item(head) <- NonValuedCell(exp)
-                                |_->()
-                          if x._cellsDependents.ContainsKey(head)
-                          then    match x._cellsDependents.Item(head) with
-                                  Node(_, adj) ->   propagateChange adj
-                          propagateChange tail
-            |_->()
-         propagateChange dependents
-
-    new() = { _cells = new Dictionary<Name, Cell>() 
-              _cellsDependents = new Dictionary<TreeNodeKey, TreeNode>()
-              _cellsDependees = new Dictionary<TreeNodeKey, TreeNode>() }            
-    end
         
 
 let funN args exp= let rec doArgs args= match args with |(head::[])-> Fun(head,exp)
@@ -248,8 +107,9 @@ let rec eval env  (ctx:MatrixContext) =
         in
         function 
                  Const (d)-> DoubleVal d
-                 | Binding (name, trans) -> let newEnv= ctxIntoEnv ctx env
+                 |Ref(name,trans)-> let newEnv= ctxIntoEnv ctx env in
                                             newEnv.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans newEnv)
+                 | Binding name -> env.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
                  | Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match ctx with
                                                                                          CellContext((n, y, m), g) -> ((n, y, m), g)
@@ -300,7 +160,7 @@ let previousYearTrans (c:MatrixContext) = match c with
                                           CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
                                           | _ -> c
 let globalYearTrans _= GlobalContext
-let var a = Binding(a, nulContextTrans)
+let var a = Ref(a, nulContextTrans)
 
 // Samples
  
@@ -331,13 +191,13 @@ calcStore.Add (qualifiedKey (cellCtx "entity1" 2016 1, "charges" ),Const -50.)
 
 
 calcStore.Add (qualifiedKey (GlobalContext, "natureX"), (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; var "rent"])) 
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"; "c"] (var "a" <+> var "b" <+> var "c") $ [var "charges"; Binding("rent", previousYearTrans); var "works"])
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureX"), (Binding("natureX", previousYearTrans)))
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureX"), (Binding("natureX", previousYearTrans)))
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"; "c"] (var "a" <+> var "b" <+> var "c") $ [var "charges"; Ref("rent", previousYearTrans); var "works"])
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureX"), (Ref("natureX", previousYearTrans)))
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureX"), (Ref("natureX", previousYearTrans)))
 
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureYY"), (var ("natureX")) )
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureYY"), (Binding("natureYY", previousYearTrans)))
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureYY"), (Binding("natureYY", previousYearTrans)) )
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureYY"), (Ref("natureYY", previousYearTrans)))
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureYY"), (Ref("natureYY", previousYearTrans)) )
 
 
 // simple calculation
@@ -362,20 +222,20 @@ let natureX2016 = eval env0 (cellCtx "entity1" 2016 1) (var "natureX")
 let natureYY2012 = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
-calcStore.[qualifiedKey (cellCtx "entity1" 2010 1, "natureX")] <- (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; Binding("rent", previousYearTrans)])
+calcStore.[qualifiedKey (cellCtx "entity1" 2010 1, "natureX")] <- (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; Ref("rent", previousYearTrans)])
 let natureYY2012_ = eval env0 (cellCtx "entity1" 2012 1) (var "natureYY")
 
 
 // holding rent is calculated based on children rents, using an aggregation function (Sum)
 calcStore.Add (qualifiedKey(cellCtx "CompanyA" 2009 1, "rent"), Const 100.) 
-calcStore.Add (qualifiedKey(cellCtx "Holding" 2010 1, "rent"), (Children(Sum, Binding("rent", previousYearTrans)))) 
+calcStore.Add (qualifiedKey(cellCtx "Holding" 2010 1, "rent"), (Children(Sum, Ref("rent", previousYearTrans)))) 
 let holdingrent = eval env0 (cellCtx "Holding" 2010 1) (var "rent")
 
 
 // holding rent is calculated taking in account ownership ratio of children
 calcStore.Add (qualifiedKey(cellCtx "CompanyW" 2009 1, "rent"), Const 100.) 
 calcStore.Add (qualifiedKey(cellCtx "CompanyZ" 2009 1, "rent"), Const 900.) 
-calcStore.Add (qualifiedKey(cellCtx "OtherHolding" 2010 1, "rent"), (Children(Sum, Binding("rent", previousYearTrans))))
+calcStore.Add (qualifiedKey(cellCtx "OtherHolding" 2010 1, "rent"), (Children(Sum, Ref("rent", previousYearTrans))))
 let otherholdingrent = eval env0 (cellCtx "OtherHolding" 2010 1) (var "rent")
 
 // allow using YEAR in the formula as a reference to the contextual date
