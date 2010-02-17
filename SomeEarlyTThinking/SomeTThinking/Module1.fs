@@ -37,6 +37,7 @@ type Exp = Const of double
            |Binding of Name * ContextTrans
            |Children of Fold * Exp
            |BinaryExp of Operation * Exp * Exp 
+           |If of Exp * Exp * Exp
            |Fun of Name * Exp
            |App of Exp * Exp
 and DoubleOp=  Plus | Minus | Times | Min | Max 
@@ -288,6 +289,11 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
                  | BinaryExp(BoolOp b, e1, e2) -> raise(Exception())
                  | BinaryExp(ComparaOp c, e1, e2) -> let op = match c with Equals -> (=) | Greater -> (>) | GreaterOrEq -> (>=)
                                                      compare op e1 e2
+                 | If(ePred, eThen, eElse) -> match (eval (ctxIntoEnv ctx env) cmap ctx ePred) with
+                                              BoolVal(res) -> if res 
+                                                              then (eval (ctxIntoEnv ctx env) cmap ctx eThen)
+                                                              else (eval (ctxIntoEnv ctx env) cmap ctx eElse)
+                                              |_ -> raise(Exception())
                  | Fun(name,e)-> FunVal(env,name,e)
                  | App (ef,e1) ->  match(eval (ctxIntoEnv ctx env) cmap ctx ef) with
                                      FunVal(env,name,e)->
@@ -393,4 +399,7 @@ let otherholdingrent = eval env0 calcMap (cellCtx "OtherHolding" 2010 1) (var "r
 let testYEAR = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (var "a" .+. var "b") $ [var "YEAR"; Const(10.)])
 
 
-let t = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (minE (var "a") (var "b")) $ [var "YEAR"; Const(10.)])
+let testCompare = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (var "a" .>. var "b") $ [var "YEAR"; Const(10.)])
+
+let testIf = eval env0 calcMap (cellCtx "Holding" 2010 1) (If(var "YEAR" .>. Const(10.), var "YEAR", Const(10.)))
+
