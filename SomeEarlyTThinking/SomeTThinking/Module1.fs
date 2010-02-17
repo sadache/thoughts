@@ -5,6 +5,7 @@ open System.Collections.Generic
 let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Force()
 let curry2 f = fun a b -> f(a,b)
 let reverse f = fun b a-> f a b
+let id i=i
 
 type Entity = EntityName 
 and EntityName= string
@@ -64,6 +65,17 @@ let min (a:double) (b:double) = Math.Min(a,b)
 type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
 
+let collectExDependencies exp ctxt= 
+                let rec collect dependencies= 
+                           function  Const _|Binding _ |Context _->  dependencies
+                                    |Ref(name,trans)->  (name,trans ctxt)::dependencies
+                                    |Plus(e1,e2) | Times(e1, e2) |Max(e1, e2)|Min(e1, e2)| App (e1,e2)
+                                         -> collect (collect dependencies e1) e2
+                                    |Fun(_,e) ->  collect dependencies e
+                                    |Children(_,_)-> raise(NotImplementedException())
+
+                in collect [] exp
+                                        
 
 let rec eval (env :Env) = 
         let gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
@@ -77,7 +89,7 @@ let rec eval (env :Env) =
                  |Context dimension-> match (dimension,env.context) with (Year ,CellContext ((_, y, _), _)) ->  DoubleVal y 
                                                                         |(Month,CellContext ((_, _, m), _)) -> DoubleVal m
                                                                          |(_,GlobalContext) -> raise (InvalidProgramException("global context does not contain the demanded dimension"))
-                 |Ref(name,trans)-> env.bindigs.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans env  )
+                 |Ref(name,trans)-> gotogetValue name trans env  
                  |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
                  |Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match env.context with
@@ -123,10 +135,11 @@ and storeCache (key,context) env=
 
 let (<+>) a b = Plus (a,b)
 let ($) = appN
-let id i=i
+
 let nulContextTrans: ContextTrans  = id
-let previousYearTrans :ContextTrans = function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
-                                               | c -> c
+let previousYearTrans :ContextTrans = 
+                    function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
+                            | c -> c
 
 let globalYearTrans _= GlobalContext
 let var a = Ref(a, nulContextTrans)
@@ -159,9 +172,9 @@ calcStore.Add (qualifiedKey (cellCtx "entity1" 2016 1, "rent"), Const 200.)
 calcStore.Add (qualifiedKey (cellCtx "entity1" 2016 1, "charges" ),Const -50.)
 
 
-calcStore.Add (qualifiedKey (GlobalContext, "natureX"), (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; var "rent"])) 
+calcStore.Add (qualifiedKey (GlobalContext, "natureX"), (funN ["a"; "b"] (Binding "a" <+> Binding "b") $ [var "charges"; var "rent"])) 
 
-calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"; "c"] (var "a" <+> var "b" <+> var "c") $ [var "charges"; Ref("rent", previousYearTrans); var "works"])
+calcStore.Add (qualifiedKey(cellCtx "entity1" 2010 1, "natureX"), funN ["a"; "b"; "c"] (Binding "a" <+> Binding "b" <+> Binding "c") $ [var "charges"; Ref("rent", previousYearTrans); var "works"])
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2011 1, "natureX"), (Ref("natureX", previousYearTrans)))
 calcStore.Add (qualifiedKey(cellCtx "entity1" 2012 1, "natureX"), (Ref("natureX", previousYearTrans)))
 
@@ -192,7 +205,7 @@ let natureX2016 = eval <| env0With (cellCtx "entity1" 2016 1) <| (var "natureX")
 let natureYY2012 = eval <| env0With (cellCtx "entity1" 2012 1) <| (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
-calcStore.[qualifiedKey (cellCtx "entity1" 2010 1, "natureX")] <- (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; Ref("rent", previousYearTrans)])
+calcStore.[qualifiedKey (cellCtx "entity1" 2010 1, "natureX")] <- (funN ["a"; "b"] (Binding "a" <+> Binding "b") $ [var "charges"; Ref("rent", previousYearTrans)])
 let natureYY2012_ = eval <| env0With (cellCtx "entity1" 2012 1) <| (var "natureYY")
 
 
@@ -209,7 +222,7 @@ calcStore.Add (qualifiedKey(cellCtx "OtherHolding" 2010 1, "rent"), (Children(Su
 let otherholdingrent = eval <| env0With (cellCtx "OtherHolding" 2010 1)<| (var "rent")
 
 // allow using YEAR in the formula as a reference to the contextual date
-let testYEAR = eval <| env0With (cellCtx "Holding" 2010 1) <| (funN ["a"; "b"] (var "a" <+> var "b") $ [Context Year; Const(10.)])
+let testYEAR = eval <| env0With (cellCtx "Holding" 2010 1) <| (funN ["a"; "b"] (Binding "a" <+> Binding "b") $ [Context Year; Const(10.)])
 
 
 
