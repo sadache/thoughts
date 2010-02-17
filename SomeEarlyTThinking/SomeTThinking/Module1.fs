@@ -35,17 +35,22 @@ let buildContextKey rawkey  =
 let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
 type ContextDimensions= Year| Month
-type Exp = Const of double
-           |Context of ContextDimensions
-           |Ref of Name * ContextTrans //refs are evil
-           |Binding of Name
-           |Children of Fold * Exp
-           |Plus of Exp * Exp
-           |Times of Exp * Exp
-           |Min of Exp * Exp
-           |Max of Exp * Exp
-           |Fun of Name * Exp
-           |App of Exp * Exp
+type  Exp = Const of double
+             |ConstB of bool 
+             |Context of ContextDimensions
+             |Ref of Name * ContextTrans //refs are evil
+             |BinaryExp of Operation * Exp * Exp 
+             |Binding of Name
+             |Children of Fold * Exp            
+             |Fun of Name * Exp
+             |App of Exp * Exp
+
+and DoubleOp=  Plus |Times |Min |Max 
+and BoolOp= Or | And
+and ComparaOp= Equals
+and Operation= DoubleOp of DoubleOp
+               |BoolOp of BoolOp
+               |ComparaOp of ComparaOp
 
 and Fold = Sum | Avg
 
@@ -64,15 +69,14 @@ let min (a:double) (b:double) = Math.Min(a,b)
 
 type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
-
+type Promise<'a>= System.Threading.Tasks.Task<'a>
 let collectExDependencies exp ctxt= 
                 let rec collect dependencies= 
-                           function  Const _|Binding _ |Context _->  dependencies
+                           function  Const _|ConstB _| Binding _ |Context _->  dependencies
                                     |Ref(name,trans)->  (name,trans ctxt)::dependencies
-                                    |Plus(e1,e2) | Times(e1, e2) |Max(e1, e2)|Min(e1, e2)| App (e1,e2)
-                                         -> collect (collect dependencies e1) e2
+                                    |BinaryExp(_,e1,e2) |App (e1,e2)-> collect (collect dependencies e1) e2
                                     |Fun(_,e) ->  collect dependencies e
-                                    |Children(_,_)-> raise(NotImplementedException())
+                                    |Children(_,_)-> dependencies//raise(NotImplementedException())
 
                 in collect [] exp
                                         
@@ -86,10 +90,11 @@ let rec eval (env :Env) =
                             |(v1,v2) -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , ([|op  ; v1; v2 |]:Object[]) ))
         in
         function Const (d)-> DoubleVal d
+                 |ConstB b-> raise (NotImplementedException())
                  |Context dimension-> match (dimension,env.context) with (Year ,CellContext ((_, y, _), _)) ->  DoubleVal y 
                                                                         |(Month,CellContext ((_, _, m), _)) -> DoubleVal m
                                                                          |(_,GlobalContext) -> raise (InvalidProgramException("global context does not contain the demanded dimension"))
-                 |Ref(name,trans)-> gotogetValue name trans env  
+                 |Ref(name,trans)-> snd (gotogetValue name trans env).Result  
                  |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
                  |Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match env.context with
@@ -110,30 +115,29 @@ let rec eval (env :Env) =
                                                     |[]-> DoubleVal(acc)
                                                 foldsum ownership 0.
                                             | Avg -> raise(Exception())
-                 | Plus(e1,e2)-> app (+) e1 e2
-                 | Times(e1, e2) -> app (*) e1 e2
-                 | Max(e1, e2) -> app max e1 e2
-                 | Min(e1, e2) -> app min e1 e2
+                 | BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> (*) | Min -> min | Max -> max 
+                                                   in app op e1 e2
+                 | BinaryExp (ComparaOp o, e1,e2)-> raise(NotImplementedException())
+                 | BinaryExp (BoolOp o, e1,e2)->  raise(NotImplementedException())
                  | Fun(name,e)-> FunVal(env,name,e)
                  | App (ef,e1) ->  match(eval env ef) with
                                      FunVal(env,name,e)->
                                         let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
                                         in eval newEnv e
                                      |exp -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , exp ))
-
 and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
-and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Value>() 
-and storeCache (key,context) env=
-            let qualifiedKey= buildContextKey key context in
-                                cache.GetOrAdd(qualifiedKey,
-                                     fun k-> eval {bindigs=env ;context=context} 
-                                              ( getCalcFromStore qualifiedKey 
-                                                 |> getOrElse 
-                                                 <| lazy(Option.get (getCalcFromStore key))))
 
-let (<+>) a b = Plus (a,b)
+and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Promise<Set<string>*Value>>() 
+and storeCache (key,context) env:Promise<Set<string>*Value>=            
+                let qualifiedKey= buildContextKey key context 
+                let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy( Option.get (getCalcFromStore key))
+                 in   cache.GetOrAdd(qualifiedKey,
+                                     fun k-> Promise.Factory.StartNew(fun () ->(Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) (collectExDependencies exp context )),eval {bindigs=env ;context=context} exp)))
+                                                                                          
+
+let (<+>) a b = BinaryExp  (DoubleOp Plus, a,b)
 let ($) = appN
 
 let nulContextTrans: ContextTrans  = id
@@ -141,7 +145,7 @@ let previousYearTrans :ContextTrans =
                     function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
                             | c -> c
 
-let globalYearTrans _= GlobalContext
+let globalTrans _= GlobalContext
 let local a = Ref(a, nulContextTrans)
 
 // Samples
