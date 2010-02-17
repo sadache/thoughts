@@ -33,19 +33,24 @@ let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
 
 type Exp = Const of double
+           |ConstB of bool 
            |Binding of Name * ContextTrans
            |Children of Fold * Exp
-           |Plus of Exp * Exp
-           |Times of Exp * Exp
-           |Min of Exp * Exp
-           |Max of Exp * Exp
+           |BinaryExp of Operation * Exp * Exp 
            |Fun of Name * Exp
            |App of Exp * Exp
+and DoubleOp=  Plus | Minus | Times | Min | Max 
+and BoolOp= Or | And
+and ComparaOp= Equals | Greater | GreaterOrEq 
+and Operation= DoubleOp of DoubleOp
+              |BoolOp of BoolOp
+              |ComparaOp of ComparaOp
 and Fold = Sum
            | Avg
 
 type Env= Map<Name,Value>
 and Value= DoubleVal of double
+            | BoolVal of bool
             | FunVal of Env * Name * Exp
 
 type Cell = EmptyCell
@@ -58,8 +63,6 @@ type DependencyTree = Dictionary<TreeNodeKey, TreeNode>
 and TreeNode = Node of TreeNodeKey * AdjacencyList
 and TreeNodeKey = string
 and AdjacencyList = string list
-
-
 
 
 
@@ -251,9 +254,13 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
         let app op a b = match((eval (ctxIntoEnv ctx env) cmap ctx a,eval (ctxIntoEnv ctx env) cmap ctx b)) with
                                                     (DoubleVal(d1),DoubleVal(d2))-> DoubleVal (op d1 d2)
                                                     |_ -> raise(Exception())
+        let compare op a b = match((eval (ctxIntoEnv ctx env) cmap ctx a,eval (ctxIntoEnv ctx env) cmap ctx b)) with
+                                                    (DoubleVal(d1),DoubleVal(d2))-> BoolVal (op d1 d2)
+                                                    |_ -> raise(Exception())
         in
         function 
                  Const (d)-> DoubleVal d
+                 | ConstB b -> BoolVal b
                  | Binding (name, trans) -> let newEnv= ctxIntoEnv ctx env
                                             newEnv.TryFind(name) |> getOrElse <| lazy(gotogetValue name trans newEnv)
                  | Children(fold, e) -> 
@@ -276,10 +283,11 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
                                                     |[]-> DoubleVal(acc)
                                                 foldsum ownership 0.
                                             | Avg -> raise(Exception())
-                 | Plus(e1,e2)-> app (+) e1 e2
-                 | Times(e1, e2) -> app (*) e1 e2
-                 | Max(e1, e2) -> app max e1 e2
-                 | Min(e1, e2) -> app min e1 e2
+                 | BinaryExp(DoubleOp d, e1, e2) -> let op = match d with Plus -> (+) |Times -> (*) | Minus -> (-) | Min -> min | Max -> max
+                                                    app op e1 e2
+                 | BinaryExp(BoolOp b, e1, e2) -> raise(Exception())
+                 | BinaryExp(ComparaOp c, e1, e2) -> let op = match c with Equals -> (=) | Greater -> (>) | GreaterOrEq -> (>=)
+                                                     compare op e1 e2
                  | Fun(name,e)-> FunVal(env,name,e)
                  | App (ef,e1) ->  match(eval (ctxIntoEnv ctx env) cmap ctx ef) with
                                      FunVal(env,name,e)->
@@ -288,10 +296,17 @@ let rec eval env (cmap:CalcMap) (ctx:MatrixContext) =
                                      |_ -> raise (Exception())
 
 
-
-
-let (<+>) a b = Plus (a,b)
+let (.=.) a b = BinaryExp (ComparaOp Equals, a , b)
+let (.>.) a b = BinaryExp (ComparaOp Greater, a , b)
+let (.>=.) a b = BinaryExp (ComparaOp GreaterOrEq, a , b)
+let (.-.) a b = BinaryExp (DoubleOp Minus, a, b)
+let (.+.) a b = BinaryExp (DoubleOp Plus, a,b)
+let (.*.) a b = BinaryExp (DoubleOp Times, a,b)
+let maxE a b = BinaryExp (DoubleOp Max, a,b)
+let minE a b = BinaryExp (DoubleOp Min, a,b)
 let ($) = appN
+
+let something = let one=1 in one
 
 let nulContextTrans (c:MatrixContext) = c
 let previousYearTrans (c:MatrixContext) = match c with
@@ -328,8 +343,8 @@ calcMap.registerVal (cellCtx "entity1" 2016 1) "rent" (DoubleVal(200.))
 calcMap.registerVal (cellCtx "entity1" 2016 1) "charges" (DoubleVal(-50.))
 
 
-calcMap.registerExp GlobalContext "natureX" (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; var "rent"]) [var "charges"; var "rent"]
-calcMap.registerExp (cellCtx "entity1" 2010 1) "natureX" (funN ["a"; "b"; "c"] (var "a" <+> var "b" <+> var "c") $ [var "charges"; Binding("rent", previousYearTrans); var "works"]) [var "charges"; Binding("rent", previousYearTrans); var "works"]
+calcMap.registerExp GlobalContext "natureX" (funN ["a"; "b"] (var "a" .+. var "b") $ [var "charges"; var "rent"]) [var "charges"; var "rent"]
+calcMap.registerExp (cellCtx "entity1" 2010 1) "natureX" (funN ["a"; "b"; "c"] (var "a" .+. var "b" .+. var "c") $ [var "charges"; Binding("rent", previousYearTrans); var "works"]) [var "charges"; Binding("rent", previousYearTrans); var "works"]
 calcMap.registerExp (cellCtx "entity1" 2011 1) "natureX" (Binding("natureX", previousYearTrans)) [Binding("natureX", previousYearTrans)]
 calcMap.registerExp (cellCtx "entity1" 2012 1) "natureX" (Binding("natureX", previousYearTrans)) [Binding("natureX", previousYearTrans)]
 
@@ -358,7 +373,7 @@ let natureX2016 = eval env0 calcMap (cellCtx "entity1" 2016 1) (var "natureX")
 let natureYY2012 = eval env0 calcMap (cellCtx "entity1" 2012 1) (var "natureYY")
 
 // Can change the formula for a given cell. Dependencies must be updated and change must be propagated so that dependents are recalculated
-calcMap.changeTo (cellCtx "entity1" 2010 1) "natureX" (funN ["a"; "b"] (var "a" <+> var "b") $ [var "charges"; Binding("rent", previousYearTrans)]) [var "charges"; Binding("rent", previousYearTrans)]
+calcMap.changeTo (cellCtx "entity1" 2010 1) "natureX" (funN ["a"; "b"] (var "a" .+. var "b") $ [var "charges"; Binding("rent", previousYearTrans)]) [var "charges"; Binding("rent", previousYearTrans)]
 let natureYY2012_ = eval env0 calcMap (cellCtx "entity1" 2012 1) (var "natureYY")
 
 
@@ -375,7 +390,7 @@ calcMap.registerExp (cellCtx "OtherHolding" 2010 1) "rent" (Children(Sum, Bindin
 let otherholdingrent = eval env0 calcMap (cellCtx "OtherHolding" 2010 1) (var "rent")
 
 // allow using YEAR in the formula as a reference to the contextual date
-let testYEAR = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (var "a" <+> var "b") $ [var "YEAR"; Const(10.)])
+let testYEAR = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (var "a" .+. var "b") $ [var "YEAR"; Const(10.)])
 
 
-
+let t = eval env0 calcMap (cellCtx "Holding" 2010 1) (funN ["a"; "b"] (minE (var "a") (var "b")) $ [var "YEAR"; Const(10.)])
