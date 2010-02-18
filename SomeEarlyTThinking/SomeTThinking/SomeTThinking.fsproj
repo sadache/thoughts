@@ -30,6 +30,10 @@
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FSharp.PowerPack">
+      <HintPath>D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\Dependencies\FSharp.PowerPack.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
@@ -37,8 +41,12 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="UsefulStuff.fs" />
+    <Compile Include="Exp.fs" />
     <Compile Include="Module1.fs" />
     <None Include="Script.fsx" />
+    <None Include="Tests.fsx" />
+    
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,32 +1,10 @@
 module Module1
 open System
 open System.Collections.Generic
-
-let getOrElse o (a:'a Lazy)= if(Option.isSome o) then o.Value else a.Force()
-let curry2 f = fun a b -> f(a,b)
-let reverse f = fun b a-> f a b
-let id i=i
-
-type Entity = EntityName 
-and EntityName= string
-
-type EntityDependencyGraph = Dictionary<Entity, OwnershipRelations>
-and OwnershipRelations = Owns of (Entity * OwnershipRatio) list
-and OwnershipRatio = double
+open Exp
+open UsefulStuff
 
 let getEntityRelations (entityGraph:EntityDependencyGraph) entityName = entityGraph.Item(entityName)
-
-type Name= string
-type Year = double //...
-type Month = double //...
-
-
-
-type MatrixContext = CellContext of Dimensions * EntityDependencyGraph
-                     | GlobalContext
-and Dimensions = EntityName * Year * Month
-and RelativeEntityTypeLevel = int
-and ContextTrans = MatrixContext -> MatrixContext
 
 let buildContextKey rawkey  =
              function CellContext((entityname, year, month), _) -> String.Format("{0}.{1}.{2}.{3}", entityname, rawkey, year, month)
@@ -34,38 +12,10 @@ let buildContextKey rawkey  =
 
 let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
-type ContextDimensions= Year| Month
-type  Exp = Const of double
-             |ConstB of bool 
-             |Context of ContextDimensions
-             |Ref of Name * ContextTrans //refs are evil
-             |BinaryExp of Operation * Exp * Exp 
-             |Binding of Name
-             |Children of Fold * Exp            
-             |Fun of Name * Exp
-             |App of Exp * Exp
-
-and DoubleOp=  Plus |Times |Min |Max 
-and BoolOp= Or | And
-and ComparaOp= Equals
-and Operation= DoubleOp of DoubleOp
-               |BoolOp of BoolOp
-               |ComparaOp of ComparaOp
-
-and Fold = Sum | Avg
-
 type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
 
 and Value= DoubleVal of double
             | FunVal of Env * Name * Exp
-
-let funN = List.foldBack <| curry2 Fun 
-let appN f exps= (List.foldBack <| fun arg f' -> App( f', arg)) exps f
-// could do: let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
-
-let max (a:double) (b:double) = Math.Max(a,b)
-let min (a:double) (b:double) = Math.Min(a,b)
-
 
 type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
@@ -125,6 +75,7 @@ let rec eval (env :Env) =
                                         let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
                                         in eval newEnv e
                                      |exp -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , exp ))
+
 and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
@@ -137,14 +88,5 @@ and storeCache (key,context) env:Promise<Set<string>*Value>=
                                      fun k-> Promise.Factory.StartNew(fun () ->(Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) (collectExDependencies exp context )),eval {bindigs=env ;context=context} exp)))
                                                                                           
 
-let (<+>) a b = BinaryExp  (DoubleOp Plus, a,b)
-let ($) = appN
 
-let nulContextTrans: ContextTrans  = id
-let previousYearTrans :ContextTrans = 
-                    function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
-                            | c -> c
-
-let globalTrans _= GlobalContext
-let local a = Ref(a, nulContextTrans)
 

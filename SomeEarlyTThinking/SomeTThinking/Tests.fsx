@@ -1,5 +1,10 @@
-﻿#load "Module1.fs"
+﻿#load "UsefulStuff.fs"
+#load "Exp.fs"
+#load "Module1.fs"
+
+
 open Module1
+open Exp
 open System
 // Samples
  
