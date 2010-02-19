@@ -19,6 +19,7 @@ and Value= DoubleVal of double
 
 type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
+open Microsoft.FSharp.Control
 type Promise<'a>= System.Threading.Tasks.Task<'a>
 let collectExDependencies exp ctxt= 
                 let rec collect dependencies= 
@@ -48,12 +49,12 @@ let rec eval (env :Env) =
                  |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
                  |Children(fold, e) -> 
                                             let ((entityname,year,month),entitygraph)  = match env.context with
-                                                                                         CellContext((n, y, m), g) -> ((n, y, m), g)
+                                                                                         CellContext(d, g) -> (d, g)
                                                                                          |_->raise(Exception())
                                             let ownership = match getEntityRelations entitygraph entityname with Owns(list) -> list
                                             in
                                             match fold with
-                                            Sum -> 
+                                            Sum -> //List.fold  fun acc child ->   DoubleVal(0)
                                                 let rec foldsum list acc =
                                                     match list with
                                                     (owned,r)::t -> 
@@ -84,9 +85,12 @@ and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Promise<Set
 and storeCache (key,context) env:Promise<Set<string>*Value>=     
                 let qualifiedKey= buildContextKey key context 
                 let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy( Option.get (getCalcFromStore key))
-                 in   cache.GetOrAdd(qualifiedKey,
-                                     fun k-> Promise.Factory.StartNew(fun () ->(Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) (collectExDependencies exp context )),eval {bindigs=env ;context=context} exp)))
-                                                                                          
+                let valueFactory=fun k-> let toRun  = (async{ let dependencies=collectExDependencies exp context
+                                                              let newEnv={bindigs=env ;context=context}
+                                                              let! others=  Async.Parallel <| List.map  ( reverse storeCache env >> Async.AwaitTask )  dependencies 
+                                                              return (Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies  ),eval newEnv exp)})
+                                         in Async.StartAsTask toRun
+                in cache.GetOrAdd(qualifiedKey,valueFactory)                                                              
 
 
 
