@@ -5,14 +5,12 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{5e75fd86-3910-484b-9690-4bdcf2b2b620}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>SomeTThinking</RootNamespace>
-    <AssemblyName>SomeTThinking</AssemblyName>
+    <ProjectGuid>{95693707-bd9e-49ea-a67c-5ac802b4674b}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Agents</RootNamespace>
+    <AssemblyName>Agents</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <Name>SomeTThinking</Name>
-    <ReferencePath>
-    </ReferencePath>
+    <Name>Agents</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,31 +31,24 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>
-    <Compile Include="UsefulStuff.fs" />
-    <Compile Include="Exp.fs" />
-    <Compile Include="Module1.fs" />
-    <None Include="Script.fsx" />
-    <None Include="Tests.fsx" />
-    <None Include="TestScenarios.fsx" />
-    <Compile Include="TestScenarios.fs" />
+    <None Include="AgentSamples.fsx" />
+    <None Include="AuctionAgent.fsx" />
+    <None Include="AuctionOriginal.fsx" />
+    <None Include="BookExamples1.fsx" />
+    <None Include="BookExemples2.fsx" />
+    <None Include="MultipleWorkers.fsx" />
+    <Compile Include="AgentSystem.fs" />
+    <None Include="MapReduce.fsx" />
+    <None Include="ActiveObjectSamples.fsx" />
+    <None Include="ActiveObjectMapReduce.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="ConsoleApplication14">
-      <HintPath>D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\Dependencies\ConsoleApplication14.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Agents\Agents.fsproj">
-      <Name>Agents</Name>
-      <Project>{95693707-bd9e-49ea-a67c-5ac802b4674b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

@@ -3,38 +3,47 @@ open System.Collections.Generic
 open UsefulStuff
 open System
 
-type Entity = EntityName 
-and EntityName= string
-type Year = double //...
-type Month = double //...
+type DateD=int
 
-type EntityDependencyGraph = Dictionary<Entity, OwnershipRelations>
+type Entity = {name:EntityName;etype:EntityType;dateBounds:DateD*DateD}
+                member x.OutOfBound (d:DateD):bool= let left,right= x.dateBounds in d < left || right < d
+and EntityName= string
+and EntityType=string
+
+type EntityDependencyGraph = Dictionary<EntityName, Entity*OwnershipRelations>
 and OwnershipRelations = Owns of (Entity * OwnershipRatio) list
 and OwnershipRatio = double
+and EntityDependencyFunction= DateD -> EntityDependencyGraph
 
-type MatrixContext = CellContext of Dimensions * EntityDependencyGraph
-                     | GlobalContext
-and Dimensions = EntityName * Year * Month
-and RelativeEntityTypeLevel = int
+type MatrixContext = CellContext of Dimensions 
+                    |PartialContext of PartialDimensions 
+                    | GlobalContext
+                     member x.IsConsistent= match x with PartialContext _ | GlobalContext -> true
+                                                           |CellContext ds -> not(ds.entity.OutOfBound(ds.date))
+ 
+and Dimensions = {entity :Entity ;date: DateD ;dependecyFunction: EntityDependencyFunction}
+and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   
+
 and ContextTrans = MatrixContext -> MatrixContext
 type Name= string
-type ContextDimensions= Year| Month
+type DimensionsRequest= Year| Month
 
 
 
 type  Exp = Const of double
              |ConstB of bool 
-             |Context of ContextDimensions
+             |Context of DimensionsRequest
              |Ref of Name * ContextTrans //refs are evil
              |BinaryExp of Operation * Exp * Exp 
+             |If of Exp * Exp * Exp
              |Binding of Name
              |Children of Fold * Exp            
              |Fun of Name * Exp
              |App of Exp * Exp
 
-and DoubleOp=  Plus |Times |Min |Max 
+and DoubleOp=  Plus |Minus|Times |Min |Max 
 and BoolOp= Or | And
-and ComparaOp= Equals
+and ComparaOp= Equals|Greater | GreaterOrEq
 
 and Operation= DoubleOp of DoubleOp
                |BoolOp of BoolOp
@@ -47,16 +56,21 @@ let funN = List.foldBack <| curry2 Fun
 let appN f exps= (List.foldBack <| fun arg f' -> App( f', arg)) exps f
 // could do: let appN1= reverse (List.foldBack <| reverse (curry2 App)) 
 
-let max (a:double) (b:double) = Math.Max(a,b)
-let min (a:double) (b:double) = Math.Min(a,b)
-let (<+>) a b = BinaryExp  (DoubleOp Plus, a,b)
-let ($) = appN
+let (.=.) a b = BinaryExp (ComparaOp Equals, a , b)
+let (.>.) a b = BinaryExp (ComparaOp Greater, a , b)
+let (.>=.) a b = BinaryExp (ComparaOp GreaterOrEq, a , b)
+let (.-.) a b = BinaryExp (DoubleOp Minus, a, b)
+let (.+.) a b = BinaryExp (DoubleOp Plus, a,b)
+let (.*.) a b = BinaryExp (DoubleOp Times, a,b)
+let maxE a b = BinaryExp (DoubleOp Max, a,b)
+let minE a b = BinaryExp (DoubleOp Min, a,b)
 
 
 let nulContextTrans: ContextTrans  = id
-let previousYearTrans :ContextTrans = 
-                    function CellContext((entityname, year, month), g) -> CellContext((entityname, year-1., month), g)
-                            | c -> c
+let previousYear :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 12} ) 
+                                                      | c -> c
+let previousMonth :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 1} ) 
+                                                      | c -> c
 
 let globalTrans _= GlobalContext
 let local a = Ref(a, nulContextTrans)
