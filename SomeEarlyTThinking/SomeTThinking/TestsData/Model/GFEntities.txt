@@ -1,0 +1,3 @@
+"IENTITY";"TENTCODE";"TENTDESC";"TENTTYPE";"NSTART";"NEND"
+1;"S1";"Société 1";"Company";1;120
+2;"H1";"Holding 1";"Holding";1;120

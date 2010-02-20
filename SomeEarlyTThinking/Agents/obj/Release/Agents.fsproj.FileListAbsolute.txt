@@ -1,0 +1,5 @@
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\Agents\bin\Release\Agents.dll
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\Agents\bin\Release\Agents.pdb
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\Agents\obj\Release\ResolveAssemblyReference.cache
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\Agents\obj\Release\Agents.dll
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\Agents\obj\Release\Agents.pdb

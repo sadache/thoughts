@@ -1,0 +1,24 @@
+"IENTITY";"TENTCODE";"TENTDESC";"TENTTYPE";"NSTART";"NEND"
+1;"XF_DE001";"Allianz SE";"Holding";1;120
+2;"XF_DE0836";"Allianz Deutschland AG";"Holding";1;120
+3;"XF_DE0073";"Jota Vermögensverwaltungs Gmbh";"Holding";1;120
+4;"XF_DE1132";"AZL Vermögensverwaltungs Gmbh";"Holding";1;120
+5;"XF_DE0028";"Allianz Lebensversicherungs AG";"Holding";1;120
+6;"XF_DE0050";"Allianz Versicherungs AG";"Holding";1;120
+7;"A1";"A1 (DH)";"Company";1;120
+8;"A2";"A2 (PC)";"Company";1;120
+9;"A3";"A3 (JV)";"Company";1;120
+10;"A4";"A4 (FU)";"Company";1;120
+11;"B1";"B1 (DH)";"Company";1;120
+12;"B2";"B2 (PC)";"Holding";1;120
+13;"B3";"B3 (JV)";"Holding";1;120
+14;"B4";"B4 (FU)";"Company";1;120
+15;"B5";"B5 (JV)";"Company";1;120
+16;"B6";"B6 (PC)";"Company";1;120
+17;"BC1";"BC1 (DH)";"Company";1;120
+18;"C1";"C1 (DH)";"Company";1;120
+19;"C2";"C2 (PC)";"Holding";1;120
+20;"C3";"C3 (JV)";"Company";1;120
+21;"C4";"C4 (FU)";"Company";1;120
+22;"C5";"C5 (PC)";"Holding";1;120
+23;"C6";"C6 (PC)";"Company";1;120

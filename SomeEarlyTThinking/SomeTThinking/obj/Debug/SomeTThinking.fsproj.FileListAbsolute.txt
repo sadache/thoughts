@@ -1,0 +1,7 @@
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Debug\SomeTThinking.exe
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Debug\ResolveAssemblyReference.cache
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Debug\SomeTThinking.pdb
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Debug\ConsoleApplication14.dll
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Debug\ConsoleApplication14.pdb
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Debug\SomeTThinking.pdb
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Debug\SomeTThinking.exe
