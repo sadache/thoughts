@@ -101,18 +101,23 @@ let rec eval (env :Env) =
                                      |exp -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , exp ))
 
 and calcStore= new Dictionary<string,Exp>()
-and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
+and getCalcFromStore qualifiedKey= //Threading.Thread.Sleep(TimeSpan(1000L))
+                                   if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
 
-and cache= System.Collections.Concurrent.ConcurrentDictionary<string,Set<string>*Value>() 
+and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Set<string>*Value>(10,1000000) 
 and storeCache (key,context) env :Set<string>*Value=     
+                //need to try to get partial context from cache too
                 let qualifiedKey= buildContextKey key context
-                let entityT= match context with CellContext ds->ds.entity.etype |_-> ""
-                let partialKey= buildContextKey key (PartialContext {entityType=Some entityT})
-                let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
-                let valueFactory= fun k->let dependencies=collectExDependencies exp context
+                let valueFactory= fun k-> 
+                                         let entityT= match context with CellContext ds->ds.entity.etype |_-> ""
+                                         let partialKey= buildContextKey key (PartialContext {entityType=Some entityT})
+                                         let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
+                
+
+                                         let dependencies=collectExDependencies exp context
                                          let newEnv={bindigs=env ;context=context}
-                                         let _= worker <-- ( fun()->ignore <| List.map (reverse storeCache env)    dependencies)
+                                         //let _= worker <-- ( fun()-> List.iter (reverse storeCache env >> ignore)    dependencies)
                                          in (Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies  ),eval newEnv exp)
                 in cache.GetOrAdd(qualifiedKey,valueFactory)
                                                               
