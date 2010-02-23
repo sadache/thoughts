@@ -14,6 +14,7 @@ type EntityDependencyGraph = Dictionary<EntityName, Entity*OwnershipRelations>
 and OwnershipRelations = Owns of (Entity * OwnershipRatio) list
 and OwnershipRatio = double
 and EntityDependencyFunction= DateD -> EntityDependencyGraph
+let getEntityRelations (entityGraph:EntityDependencyGraph) entity = entityGraph.Item(entity)
 
 type MatrixContext = CellContext of Dimensions 
                     |PartialContext of PartialDimensions 
@@ -22,6 +23,10 @@ type MatrixContext = CellContext of Dimensions
                                                            |CellContext ds -> not(ds.entity.OutOfBound(ds.date))
  
 and Dimensions = {entity :Entity ;date: DateD ;dependecyFunction: EntityDependencyFunction}
+                    
+                    member x.Dependecies= x.dependecyFunction(x.date)
+                    member x.EntityDependencies= getEntityRelations x.Dependecies x.entity.name
+
 and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   
 
 and ContextTrans = MatrixContext -> MatrixContext

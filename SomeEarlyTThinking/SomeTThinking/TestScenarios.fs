@@ -89,7 +89,7 @@ calcStore.Add (qualifiedKey  ( PartialContext{entityType=Some"Holding"}, "RENTS"
 //
 let entityWithName n = match entityGraph.Item(n) with (e, r) -> e
 
-let testData = new GetTestData("TestsData/Allianz")
+let testData = new GetTestData("TestsData/Allianz-3")
 let i_d:int->double = Convert.ToDouble
 let f_d:float->double = Convert.ToDouble
 
@@ -108,18 +108,22 @@ Seq.iter (fun (c:ImportedRow) ->
 
 
 //
-let ctx = (cellCtx (entityWithName "XF_DE001") 120)
-//let dps=entityGraph
-let exp = ((local "RESULT_FIN"))
+let work=fun ()->let _=cache.Clear()
+                 let ctx = (cellCtx (entityWithName "XF_DE001") 120)
+                 //let dps=entityGraph
+                 let exp = ((local "RESULT_FIN"))
 
-let sw = new System.Diagnostics.Stopwatch()
-sw.Start()
-let res = eval (env0With ctx) exp
-//let store=calcStore
-sw.Stop()
-let elaplsed=sw.ElapsedMilliseconds
-Console.WriteLine(sw.ElapsedMilliseconds)
-Console.WriteLine((match res with DoubleVal(d)->d |_ -> -1.).ToString())
+                 let sw = new System.Diagnostics.Stopwatch()
+                 let _=sw.Start()
+                 let res = eval (env0With ctx) exp
+                 //let store=calcStore
+                 let _=sw.Stop()
+                 in (sw.ElapsedMilliseconds,evaluatedCells)
+
+//Console.WriteLine(sw.ElapsedMilliseconds)
+//Console.WriteLine((match res with DoubleVal(d)->d |_ -> -1.).ToString())
+List.iter (fun _ -> Console.WriteLine( work())
+                    evaluatedCells<-0) (List.replicate 100 1) 
 Console.ReadKey() |> ignore
 
 

@@ -22,6 +22,8 @@ let cellCtxByName entityname (ddate:int) =
 
 let cellCtx entity (date:int) = CellContext {entity =entity ;date= date ;dependecyFunction= fun _ -> entityGraph}
 
+let define= calcStore.Add 
+
 
 // IDX_CHG	[IDX_CHG (-1)]
 calcStore.Add (qualifiedKey (GlobalContext, "IDX_CHG") ,(Ref("IDX_CHG", previousMonth)))
@@ -107,9 +109,9 @@ Seq.iter (fun (r:ImportedEntityLinks) -> let e = _entity(r.Entity)
 
 Seq.iter (fun (c:ImportedRow) -> 
                   calcStore.Add(qualifiedKey  (cellCtxByName (c.Entity.Code)  (monthsAway c.Date), c.Nature), (Const(f_d(c.Value)))))  testData.Cells
-                                   
 
 
+cache.Clear()
 //
 let ctx = (cellCtx (entityWithName "XF_DE001") 120)
 //let dps=entityGraph
