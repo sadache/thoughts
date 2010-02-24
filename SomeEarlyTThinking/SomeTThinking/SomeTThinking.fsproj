@@ -43,8 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
-      <HintPath>D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\Dependencies\ConsoleApplication14.dll</HintPath>
-      <Private>True</Private>
+      <HintPath>Dependencies\ConsoleApplication14.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
