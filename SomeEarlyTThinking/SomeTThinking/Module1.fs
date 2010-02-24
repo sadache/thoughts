@@ -33,9 +33,9 @@ let rec collectExDependencies exp (ctxt:MatrixContext)=
                             |BinaryExp(_,e1,e2) |App (e1,e2)-> collect (collect dependencies e1) e2
                             |Fun(_,e) ->  collect dependencies e
                             |Children(fold, e) -> 
-                                            let dims  = match ctxt with CellContext(d) -> (d)
-                                            let (_,Owns(ownership)) =dims.EntityDependencies 
-                                            in List.fold (fun ds (owned,_)-> let newCtx = CellContext({dims with entity=owned})
+                                            let dims, entitydepFun  = match ctxt with CellContext(d, entitydepFun) -> d, entitydepFun
+                                            let (_,Owns(ownership)) =ctxt.EntityDependencies 
+                                            in List.fold (fun ds (owned,_)-> let newCtx = CellContext({dims with entity=owned}, entitydepFun)
                                                                              in ds @ (collectExDependencies e newCtx) ) dependencies ownership  
                             |If (condition,_,_) -> collect dependencies condition
         collect [] exp
@@ -51,15 +51,15 @@ let rec eval (env :Env) =
              |Const d-> DoubleVal d
              |ConstB b-> BoolVal b
              |Context dimension-> 
-                match dimension,env.context with Year ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Year)) 
-                                                |Month ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
+                match dimension,env.context with Year ,CellContext(ds,_) ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Year)) 
+                                                |Month ,CellContext(ds,_) ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
                                                                                                        
              |Ref(name,trans)-> evaluatedCells <- evaluatedCells+1
                                 (gotogetValue name trans env)  
-             |Children(fold, e) ->  let ds  = match env.context with CellContext(d) -> (d)
-                                    let (_,Owns(ownership)) =ds.EntityDependencies 
+             |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
+                                    let (_,Owns(ownership)) =env.context.EntityDependencies 
                                     let childrenEvaluated= let map= if(isOk<50 )then let _= isOk<-isOk+1 in Parallels.map else Seq.map
-                                                           in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned})
+                                                           in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned}, entitydepFun)
                                                                                      let newEnv= {env with context= newCtx}
                                                                                      in((eval newEnv e),r) ) ownership                                      
                                                                         
@@ -95,8 +95,8 @@ and qualifiedKey (context,key)= buildContextKey key context
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Set<string>*Value>(10,10000) 
 
 and storeCache (key,context) env :Set<string>*Value=     
-    let qualifiedKey= match context with CellContext ds-> buildContextKey key (Cell(ds))
-    let valueFactory= fun k->let entityT= match context with CellContext ds->ds.entity.etype 
+    let qualifiedKey= match context with CellContext(ds,_)-> buildContextKey key (Cell(ds))
+    let valueFactory= fun k->let entityT= match context with CellContext(ds,_)->ds.entity.etype 
                              let partialKey= buildContextKey key (Partial {entityType=Some entityT})
                              let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
     

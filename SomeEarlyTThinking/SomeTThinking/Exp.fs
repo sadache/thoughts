@@ -16,12 +16,13 @@ and OwnershipRatio = double
 and EntityDependencyFunction= DateD -> EntityDependencyGraph
 let getEntityRelations (entityGraph:EntityDependencyGraph) entity = entityGraph.Item(entity)
 
-type MatrixContext = CellContext of Dimensions 
-                        member x.IsConsistent= match x with CellContext ds -> not(ds.entity.OutOfBound(ds.date))
+type MatrixContext = CellContext of Dimensions * EntityDependencyFunction
+                        member x.IsConsistent= match x with CellContext (ds,_) -> not(ds.entity.OutOfBound(ds.date))
+                        member x.Dependecies= match x with CellContext (ds, entitydepFun) -> entitydepFun(ds.date)
+                        member x.EntityDependencies= match x with CellContext (ds, eDepFunc) -> getEntityRelations x.Dependecies ds.entity.name
 
-and Dimensions = {entity :Entity ;date: DateD ;dependecyFunction: EntityDependencyFunction}
-                    member x.Dependecies= x.dependecyFunction(x.date)
-                    member x.EntityDependencies= getEntityRelations x.Dependecies x.entity.name
+
+and Dimensions = {entity :Entity ;date: DateD}
                     
 type AttachementLevel=Cell of Dimensions 
                       |Partial of PartialDimensions
@@ -75,8 +76,8 @@ let minE a b = BinaryExp (DoubleOp Min, a,b)
 
 
 let nulContextTrans: ContextTrans  = id
-let previousYear :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 12} ) 
-let previousMonth :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 1} ) 
+let previousYear :ContextTrans = function CellContext(ds, entitydepFun) -> CellContext( {ds with date=ds.date - 12}, entitydepFun ) 
+let previousMonth :ContextTrans = function CellContext(ds, entitydepFun) -> CellContext( {ds with date=ds.date - 1}, entitydepFun ) 
 
 
 let local a = Ref(a, nulContextTrans)
