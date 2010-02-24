@@ -56,7 +56,6 @@ let rec eval (env :Env) =
                                                                                                        
              |Ref(name,trans)-> evaluatedCells <- evaluatedCells+1
                                 (gotogetValue name trans env)  
-             |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
              |Children(fold, e) ->  let ds  = match env.context with CellContext(d) -> (d)
                                     let (_,Owns(ownership)) =ds.EntityDependencies 
                                     let childrenEvaluated= let map= if(isOk<50 )then let _= isOk<-isOk+1 in Parallels.map else Seq.map
@@ -76,7 +75,7 @@ let rec eval (env :Env) =
              |If (condition , eThen , eElse)->match (eval env condition) with
                                                 BoolVal(res) -> if res then (eval env  eThen) else (eval env eElse)
                                                 |other-> raise(InvalidProgramException(String.Format ("{0} is not a boolean expression", ([|other|]:Object[]))))
-            
+             |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
              |Fun(name,e)-> FunVal(env,name,e)
              |App (ef,e1) ->  match(eval env ef) with
                                  FunVal(env,name,e)->
