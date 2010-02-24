@@ -17,15 +17,18 @@ and EntityDependencyFunction= DateD -> EntityDependencyGraph
 let getEntityRelations (entityGraph:EntityDependencyGraph) entity = entityGraph.Item(entity)
 
 type MatrixContext = CellContext of Dimensions 
-                    |PartialContext of PartialDimensions 
-                    | GlobalContext
-                     member x.IsConsistent= match x with PartialContext _ | GlobalContext -> true
-                                                           |CellContext ds -> not(ds.entity.OutOfBound(ds.date))
- 
+                        member x.IsConsistent= match x with CellContext ds -> not(ds.entity.OutOfBound(ds.date))
+
 and Dimensions = {entity :Entity ;date: DateD ;dependecyFunction: EntityDependencyFunction}
-                    
                     member x.Dependecies= x.dependecyFunction(x.date)
                     member x.EntityDependencies= getEntityRelations x.Dependecies x.entity.name
+                    
+type AttachementLevel=Cell of Dimensions 
+                      |Partial of PartialDimensions
+                      | Global
+                     
+ 
+
 
 and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   
 
@@ -73,9 +76,7 @@ let minE a b = BinaryExp (DoubleOp Min, a,b)
 
 let nulContextTrans: ContextTrans  = id
 let previousYear :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 12} ) 
-                                                      | c -> c
 let previousMonth :ContextTrans = function CellContext(ds) -> CellContext( {ds with date=ds.date - 1} ) 
-                                                      | c -> c
 
-let globalTrans _= GlobalContext
+
 let local a = Ref(a, nulContextTrans)

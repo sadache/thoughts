@@ -1,9 +1,9 @@
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\SomeTThinking.exe
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\SomeTThinking.pdb
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\Agents.dll
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\ConsoleApplication14.dll
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\Agents.pdb
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\ConsoleApplication14.pdb
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Release\ResolveAssemblyReference.cache
-D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Release\SomeTThinking.pdb
-D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\bin\Release\SomeTThinking.pdb
 D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Release\SomeTThinking.exe
+D:\EveningWork\t-thoughts\SomeEarlyTThinking\SomeTThinking\obj\Release\SomeTThinking.pdb

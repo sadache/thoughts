@@ -9,14 +9,12 @@ let mutable evaluatedCells=0
 let referenceDate= DateTime(2010,1,1).AddMonths(-1)
 let monthsAway (date:DateTime)= 12 * (date.Year - referenceDate.Year) + date.Month - referenceDate.Month
 
-
 let buildContextKey rawkey  =
-             function CellContext(ds) -> String.Format("{0}.{1}.{2}", ds.entity.name, rawkey, ds.date)
-                      |PartialContext ods -> 
+             function Cell(ds) -> String.Format("{0}.{1}.{2}", ds.entity.name, rawkey, ds.date)
+                      |Partial ods -> 
                         String.Format("{0}.{1}.{2}", defaultArg ods.entityType "_", rawkey, "_")
-                      | GlobalContext -> rawkey
+                      | Global -> rawkey
 
-let applyContextTrans (contextTrans:ContextTrans) ctx = contextTrans ctx
 
 type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
 
@@ -27,7 +25,6 @@ and Value= DoubleVal of double
 type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  MatrixContext * String
 open Microsoft.FSharp.Control
-type Promise<'a>= System.Threading.Tasks.Task<'a>
 let rec collectExDependencies exp (ctxt:MatrixContext)= 
         let rec collect dependencies= 
                    function  _ when not (ctxt.IsConsistent) -> dependencies
@@ -36,7 +33,7 @@ let rec collectExDependencies exp (ctxt:MatrixContext)=
                             |BinaryExp(_,e1,e2) |App (e1,e2)-> collect (collect dependencies e1) e2
                             |Fun(_,e) ->  collect dependencies e
                             |Children(fold, e) -> 
-                                            let dims  = match ctxt with CellContext(d) -> (d)|_->raise(Exception())
+                                            let dims  = match ctxt with CellContext(d) -> (d)
                                             let (_,Owns(ownership)) =dims.EntityDependencies 
                                             in List.fold (fun ds (owned,_)-> let newCtx = CellContext({dims with entity=owned})
                                                                              in ds @ (collectExDependencies e newCtx) ) dependencies ownership  
@@ -44,6 +41,7 @@ let rec collectExDependencies exp (ctxt:MatrixContext)=
         collect [] exp
                      
 let mutable isOk= 0
+
 let rec eval (env :Env) = 
   let app op a b = match(eval env a,eval env b) with
                          DoubleVal(d1),DoubleVal(d2)->  (op d1 d2)
@@ -53,16 +51,15 @@ let rec eval (env :Env) =
              |Const d-> DoubleVal d
              |ConstB b-> BoolVal b
              |Context dimension-> 
-                    match dimension,env.context with Year ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Year)) 
-                                                       |Month ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
-                                                       |_,GlobalContext |_,PartialContext _ -> raise (InvalidProgramException("global and partial context does not contain the demanded dimension"))
-                                                       
+                match dimension,env.context with Year ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Year)) 
+                                                |Month ,CellContext ds ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
+                                                                                                       
              |Ref(name,trans)-> evaluatedCells <- evaluatedCells+1
                                 (gotogetValue name trans env)  
              |Binding name -> env.bindigs.TryFind name |> getOrElse <| lazy(raise <| InvalidProgramException ("Binding to unexisting name " + name))
-             |Children(fold, e) ->  let ds  = match env.context with CellContext(d) -> (d) |_->raise(Exception())
+             |Children(fold, e) ->  let ds  = match env.context with CellContext(d) -> (d)
                                     let (_,Owns(ownership)) =ds.EntityDependencies 
-                                    let childrenEvaluated= let map= if(true)then let _= isOk<-isOk+1 in Parallels.map else Seq.map
+                                    let childrenEvaluated= let map= if(isOk<50 )then let _= isOk<-isOk+1 in Parallels.map else Seq.map
                                                            in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned})
                                                                                      let newEnv= {env with context= newCtx}
                                                                                      in((eval newEnv e),r) ) ownership                                      
@@ -85,12 +82,12 @@ let rec eval (env :Env) =
                                  FunVal(env,name,e)->
                                     let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
                                     in eval newEnv e
-                                 |exp -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , exp ))
+                                 |somethingElse -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , somethingElse ))
 
 and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
                                         if(not(newEnv.context.IsConsistent)) then DoubleVal 0.
                                         else let task= (storeCache (name, newEnv.context) newEnv.bindigs )
-                                             snd task
+                                             in snd task
 
 and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
@@ -99,17 +96,16 @@ and qualifiedKey (context,key)= buildContextKey key context
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Set<string>*Value>(10,10000) 
 
 and storeCache (key,context) env :Set<string>*Value=     
-    //need to try to get partial context from cache too
-    let qualifiedKey= buildContextKey key context
-    let valueFactory= fun k-> 
-                             let entityT= match context with CellContext ds->ds.entity.etype |_-> ""
-                             let partialKey= buildContextKey key (PartialContext {entityType=Some entityT})
+    let qualifiedKey= match context with CellContext ds-> buildContextKey key (Cell(ds))
+    let valueFactory= fun k->let entityT= match context with CellContext ds->ds.entity.etype 
+                             let partialKey= buildContextKey key (Partial {entityType=Some entityT})
                              let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
     
-                             let dependencies=collectExDependencies exp context
+                             //let dependencies=collectExDependencies exp context
                              let newEnv={bindigs=env ;context=context}
                              //let _=  worker <-- ( fun()-> List.iter (reverse storeCache env >> ignore)    dependencies) 
-                             in (Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies  ),eval newEnv exp)
+                             //I need to store dependencies rather with EXP rather than with values
+                             in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp)
     in cache.GetOrAdd(qualifiedKey,valueFactory)
                                                               
 //and worker = spawnParallelWorker (fun f -> //printfn "doing some Work"
