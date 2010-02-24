@@ -27,7 +27,7 @@ type QualifiedName=  MatrixContext * String
 open Microsoft.FSharp.Control
 let rec collectExDependencies exp (ctxt:MatrixContext)= 
         let rec collect dependencies= 
-                   function  _ when not (ctxt.IsConsistent) -> dependencies
+                   function |_ when not (ctxt.IsConsistent) -> dependencies
                             |Const _|ConstB _| Binding _ |Context _->  dependencies
                             |Ref(name,trans)->  (name,trans ctxt)::dependencies
                             |BinaryExp(_,e1,e2) |App (e1,e2)-> collect (collect dependencies e1) e2
@@ -47,7 +47,7 @@ let rec eval (env :Env) =
                          DoubleVal(d1),DoubleVal(d2)->  (op d1 d2)
                          |v1,v2 -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , op,v1,v2 ))
             
-  in function _ when not env.context.IsConsistent -> DoubleVal 0.
+  in function|_ when not env.context.IsConsistent -> DoubleVal 0.
              |Const d-> DoubleVal d
              |ConstB b-> BoolVal b
              |Context dimension-> 
@@ -68,17 +68,17 @@ let rec eval (env :Env) =
                                           Sum ->  DoubleVal( Seq.fold (fun (s) (DoubleVal(d1),rate) ->  s + d1*rate ) 0. (childrenEvaluated))
                                           | Avg -> raise(Exception())
 
-            |BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> (*) |Minus -> (-)| Min -> min | Max -> max 
-                                             in DoubleVal(app op e1 e2)
-            |BinaryExp (ComparaOp o, e1,e2)-> let op = match o with Equals -> (=) |Greater -> (>) | GreaterOrEq -> (>=) 
-                                              in BoolVal(app op e1 e2)
-            |BinaryExp (BoolOp o, e1,e2)->  raise(NotImplementedException())
-            |If (condition , eThen , eElse)->match (eval env condition) with
+             |BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> (*) |Minus -> (-)| Min -> min | Max -> max 
+                                              in DoubleVal(app op e1 e2)
+             |BinaryExp (ComparaOp o, e1,e2)-> let op = match o with Equals -> (=) |Greater -> (>) | GreaterOrEq -> (>=) 
+                                               in BoolVal(app op e1 e2)
+             |BinaryExp (BoolOp o, e1,e2)->  raise(NotImplementedException())
+             |If (condition , eThen , eElse)->match (eval env condition) with
                                                 BoolVal(res) -> if res then (eval env  eThen) else (eval env eElse)
                                                 |other-> raise(InvalidProgramException(String.Format ("{0} is not a boolean expression", ([|other|]:Object[]))))
             
-            |Fun(name,e)-> FunVal(env,name,e)
-            |App (ef,e1) ->  match(eval env ef) with
+             |Fun(name,e)-> FunVal(env,name,e)
+             |App (ef,e1) ->  match(eval env ef) with
                                  FunVal(env,name,e)->
                                     let newEnv= {env with bindigs= env.bindigs.Add(name, (eval env e1))}
                                     in eval newEnv e
