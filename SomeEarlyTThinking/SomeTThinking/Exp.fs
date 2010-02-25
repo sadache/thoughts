@@ -27,9 +27,7 @@ and Dimensions = {entity :Entity ;date: DateD}
                     
 type AttachementLevel=Cell of Dimensions 
                       |Partial of PartialDimensions
-                      | Global
-                     
- 
+                      | Global 
 
 
 and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   

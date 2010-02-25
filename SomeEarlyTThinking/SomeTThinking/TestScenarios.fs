@@ -3,9 +3,11 @@
 
 // Samples
 open System
+
 open ConsoleApplication14
 open Exp
 open Module1
+
 
 
 let bindings0= Map.empty

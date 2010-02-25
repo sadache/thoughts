@@ -124,6 +124,3 @@ let res = eval (env0With ctx) exp
 sw.Stop()
 let elaplsed=sw.ElapsedMilliseconds
 
-let x= lazy( let _= (printfn "dfsfsd %s" "d") in 1)
-let a=x.Force()
-let b=x.Force()

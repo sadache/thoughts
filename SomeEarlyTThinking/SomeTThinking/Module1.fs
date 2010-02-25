@@ -18,7 +18,7 @@ let monthsAway (date:DateTime)= 12 * (date.Year - referenceDate.Year) + date.Mon
 let buildContextKey rawkey  =
              function Cell(ds) -> String.Format("{0}.{1}.{2}", ds.entity.name, rawkey, ds.date)
                       |Partial ods -> 
-                        String.Format("{0}.{1}.{2}", defaultArg ods.entityType "_", rawkey, "_")
+                        String.Format("{0}.{1}", defaultArg ods.entityType "_", rawkey)
                       | Global -> rawkey
 
 
