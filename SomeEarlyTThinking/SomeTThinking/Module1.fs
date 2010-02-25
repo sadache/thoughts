@@ -5,6 +5,12 @@ open Exp
 open UsefulStuff
 open AgentSystem.LAgent
 
+let  minT:int ref =ref 0
+let  minIOT:int ref =ref 0
+let _= System.Threading.ThreadPool.GetMinThreads(minT,minIOT)
+let _= System.Threading.ThreadPool.SetMinThreads(100,minIOT.contents)
+
+
 let mutable evaluatedCells=0
 let referenceDate= DateTime(2010,1,1).AddMonths(-1)
 let monthsAway (date:DateTime)= 12 * (date.Year - referenceDate.Year) + date.Month - referenceDate.Month
@@ -16,16 +22,16 @@ let buildContextKey rawkey  =
                       | Global -> rawkey
 
 
-type Env= {bindigs:Map<Name,Value> ; context: MatrixContext}
+type Env= {bindigs:Map<Name,Value> ; context: ExecutionContext}
 
 and Value= DoubleVal of double
             |BoolVal of bool
             |FunVal of Env * Name * Exp
 
 type CalcStore=Dictionary<string,Exp>
-type QualifiedName=  MatrixContext * String
+type QualifiedName=  ExecutionContext * String
 open Microsoft.FSharp.Control
-let rec collectExDependencies exp (ctxt:MatrixContext)= 
+let rec collectExDependencies exp (ctxt:ExecutionContext)= 
         let rec collect dependencies= 
                    function |_ when not (ctxt.IsConsistent) -> dependencies
                             |Const _|ConstB _| Binding _ |Context _->  dependencies
@@ -58,7 +64,7 @@ let rec eval (env :Env) =
                                 (gotogetValue name trans env)  
              |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
                                     let (_,Owns(ownership)) =env.context.EntityDependencies 
-                                    let childrenEvaluated= let map= if(isOk<50 )then let _= isOk<-isOk+1 in Parallels.map else Seq.map
+                                    let childrenEvaluated= let map= if(true)then let _= isOk<-isOk+1 in Parallels.map else Seq.map
                                                            in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned}, entitydepFun)
                                                                                      let newEnv= {env with context= newCtx}
                                                                                      in((eval newEnv e),r) ) ownership                                      
@@ -86,25 +92,25 @@ let rec eval (env :Env) =
 and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
                                         if(not(newEnv.context.IsConsistent)) then DoubleVal 0.
                                         else let task= (storeCache (name, newEnv.context) newEnv.bindigs )
-                                             in snd task
+                                             in (snd <| task.Force())
 
 and calcStore= new Dictionary<string,Exp>()
 and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
 and qualifiedKey (context,key)= buildContextKey key context
 
-and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Set<string>*Value>(10,10000) 
+and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Set<string>*Value>>(100,10000) 
 
-and storeCache (key,context) env :Set<string>*Value=     
+and storeCache (key,context) env :Lazy<Set<string>*Value>=     
     let qualifiedKey= match context with CellContext(ds,_)-> buildContextKey key (Cell(ds))
-    let valueFactory= fun k->let entityT= match context with CellContext(ds,_)->ds.entity.etype 
-                             let partialKey= buildContextKey key (Partial {entityType=Some entityT})
-                             let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
+    let valueFactory= fun k->lazy(let entityT= match context with CellContext(ds,_)->ds.entity.etype 
+                                  let partialKey= buildContextKey key (Partial {entityType=Some entityT})
+                                  let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
     
-                             //let dependencies=collectExDependencies exp context
-                             let newEnv={bindigs=env ;context=context}
-                             //let _=  worker <-- ( fun()-> List.iter (reverse storeCache env >> ignore)    dependencies) 
-                             //I need to store dependencies rather with EXP rather than with values
-                             in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp)
+                                  //let dependencies=collectExDependencies exp context
+                                  let newEnv={bindigs=env ;context=context}
+                                  //let _=  worker <-- ( fun()-> List.iter (reverse storeCache env >> ignore)    dependencies) 
+                                  //I need to store dependencies rather with EXP rather than with values
+                                  in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp))
     in cache.GetOrAdd(qualifiedKey,valueFactory)
                                                               
 //and worker = spawnParallelWorker (fun f -> //printfn "doing some Work"

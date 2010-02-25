@@ -16,10 +16,10 @@ and OwnershipRatio = double
 and EntityDependencyFunction= DateD -> EntityDependencyGraph
 let getEntityRelations (entityGraph:EntityDependencyGraph) entity = entityGraph.Item(entity)
 
-type MatrixContext = CellContext of Dimensions * EntityDependencyFunction
-                        member x.IsConsistent= match x with CellContext (ds,_) -> not(ds.entity.OutOfBound(ds.date))
-                        member x.Dependecies= match x with CellContext (ds, entitydepFun) -> entitydepFun(ds.date)
-                        member x.EntityDependencies= match x with CellContext (ds, eDepFunc) -> getEntityRelations x.Dependecies ds.entity.name
+type ExecutionContext = CellContext of Dimensions * EntityDependencyFunction
+                            member x.IsConsistent= match x with CellContext (ds,_) -> not(ds.entity.OutOfBound(ds.date))
+                            member x.Dependecies= match x with CellContext (ds, entitydepFun) -> entitydepFun(ds.date)
+                            member x.EntityDependencies= match x with CellContext (ds, eDepFunc) -> getEntityRelations x.Dependecies ds.entity.name
 
 
 and Dimensions = {entity :Entity ;date: DateD}
@@ -33,7 +33,7 @@ type AttachementLevel=Cell of Dimensions
 
 and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   
 
-and ContextTrans = MatrixContext -> MatrixContext
+and ContextTrans = ExecutionContext -> ExecutionContext
 type Name= string
 type DimensionsRequest= Year| Month
 

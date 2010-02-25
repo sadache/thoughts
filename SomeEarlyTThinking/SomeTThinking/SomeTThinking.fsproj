@@ -40,6 +40,7 @@
     <None Include="Tests.fsx" />
     <None Include="TestScenarios.fsx" />
     <Compile Include="TestScenarios.fs" />
+    <None Include="ThreadPoolConfig.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">

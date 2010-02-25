@@ -16,11 +16,11 @@ let env0With context= {bindigs= bindings0; context=context}
 
 let entityGraph = EntityDependencyGraph()
 
-let cellCtxByName entityname (ddate:int) = 
+let cellByName entityname (ddate:int) = 
                                         let entity = match entityGraph.Item(entityname) with (e,_) -> e
-                                        in Cell {entity =entity ;date= ddate ;dependecyFunction= fun _ -> entityGraph}
+                                        in Cell {entity =entity ;date= ddate}
 
-let cellCtx entity (date:int) = CellContext {entity =entity ;date= date ;dependecyFunction= fun _ -> entityGraph}
+let cellCtx entity (date:int) = CellContext({entity =entity ;date= date}, fun _ -> entityGraph)
 
 let define= calcStore.Add 
 
@@ -108,7 +108,7 @@ Seq.iter (fun (r:ImportedEntityLinks) -> let e = _entity(r.Entity)
 
 
 Seq.iter (fun (c:ImportedRow) -> 
-                  calcStore.Add(qualifiedKey  (cellCtxByName (c.Entity.Code)  (monthsAway c.Date), c.Nature), (Const(f_d(c.Value)))))  testData.Cells
+                  calcStore.Add(qualifiedKey  (cellByName (c.Entity.Code)  (monthsAway c.Date), c.Nature), (Const(f_d(c.Value)))))  testData.Cells
 
 
 cache.Clear()
@@ -123,3 +123,7 @@ let res = eval (env0With ctx) exp
 //let store=calcStore
 sw.Stop()
 let elaplsed=sw.ElapsedMilliseconds
+
+let x= lazy( let _= (printfn "dfsfsd %s" "d") in 1)
+let a=x.Force()
+let b=x.Force()
