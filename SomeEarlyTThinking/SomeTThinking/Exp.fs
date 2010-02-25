@@ -16,10 +16,11 @@ and OwnershipRatio = double
 and EntityDependencyFunction= DateD -> EntityDependencyGraph
 let getEntityRelations (entityGraph:EntityDependencyGraph) entity = entityGraph.Item(entity)
 
+
 type ExecutionContext = CellContext of Dimensions * EntityDependencyFunction
                             member x.IsConsistent= match x with CellContext (ds,_) -> not(ds.entity.OutOfBound(ds.date))
-                            member x.Dependecies= match x with CellContext (ds, entitydepFun) -> entitydepFun(ds.date)
-                            member x.EntityDependencies= match x with CellContext (ds, eDepFunc) -> getEntityRelations x.Dependecies ds.entity.name
+                            member x.EntityDependencies= match x with CellContext (ds, eDepFunc) -> getEntityRelations (eDepFunc(ds.date)) ds.entity.name
+
 
 
 and Dimensions = {entity :Entity ;date: DateD}
