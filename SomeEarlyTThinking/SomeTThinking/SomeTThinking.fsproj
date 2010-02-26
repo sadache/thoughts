@@ -47,14 +47,8 @@
     <Reference Include="ConsoleApplication14">
       <HintPath>Dependencies\ConsoleApplication14.dll</HintPath>
     </Reference>
-    <Reference Include="DAOPersistant">
-      <HintPath>Dependencies\DAOPersistant.dll</HintPath>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
-    <Reference Include="RedisSharp">
-      <HintPath>Dependencies\RedisSharp.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
