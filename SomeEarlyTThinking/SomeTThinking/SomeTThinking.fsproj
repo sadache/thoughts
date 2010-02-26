@@ -40,10 +40,10 @@
     <None Include="Script.fsx" />
     <None Include="Tests.fsx" />
     <None Include="TestScenarios.fsx" />
-    <Compile Include="TestScenarios.fs" />
     <None Include="ThreadPoolConfig.fsx" />
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
+    <Compile Include="TestScenarios.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
