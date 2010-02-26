@@ -77,17 +77,17 @@ and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans en
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Set<string>*Value>>(100,10000) 
 
 and storeCache (key,context) env :Lazy<Set<string>*Value>=     
-    let qualifiedKey= match context with CellContext(ds,_)-> buildContextKey key (Cell(ds))
+    let cacheKey= match context with CellContext(ds,_)->String.Format("{0}.{1}.{2}", ds.entity.name, key, ds.date)
+    let ds= match context with CellContext(dimensions,_)->dimensions
     let valueFactory= fun k->lazy(let entityT= match context with CellContext(ds,_)->ds.entity.etype 
                                   let partialKey= buildContextKey key (Partial {entityType=Some entityT})
-                                  let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
+                                  let exp=  (getExpFromStore key  (Cell ds))  |> getOrElse 
+                                            <| lazy((getExpFromStore key (Partial {entityType=Some entityT})) |> getOrElse 
+                                            <| lazy( defaultArg (getExpFromStore key Global) (Const 0.)))
     
-                                  //let dependencies=collectExDependencies exp context
                                   let newEnv={bindigs=env ;context=context}
-                                  //let _=  worker <-- ( fun()-> List.iter (reverse storeCache env >> ignore)    dependencies) 
-                                  //I need to store dependencies rather with EXP rather than with values
                                   in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp))
-    in cache.GetOrAdd(qualifiedKey,valueFactory)
+    in cache.GetOrAdd(cacheKey,valueFactory)
                                                               
 //and worker = spawnParallelWorker (fun f -> //printfn "doing some Work"
  //                                          f()) 10

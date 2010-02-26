@@ -9,6 +9,7 @@ let buildContextKey rawkey  =
                         String.Format("{0}.{1}", defaultArg ods.entityType "_", rawkey)
                       | Global -> rawkey
 let calcStore= new Dictionary<string,Exp>()
-
 let getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
+let getExpFromStore natureName attachement= getCalcFromStore <| buildContextKey natureName attachement
+
 let qualifiedKey (context,key)= buildContextKey key context
