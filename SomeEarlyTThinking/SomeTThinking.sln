@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "SomeTThinking", "SomeTThinking\SomeTThinking.fsproj", "{5E75FD86-3910-484B-9690-4BDCF2B2B620}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Agents", "Agents\Agents.fsproj", "{95693707-BD9E-49EA-A67C-5AC802B4674B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,10 +13,6 @@ Global
 		{5E75FD86-3910-484B-9690-4BDCF2B2B620}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E75FD86-3910-484B-9690-4BDCF2B2B620}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E75FD86-3910-484B-9690-4BDCF2B2B620}.Release|Any CPU.Build.0 = Release|Any CPU
-		{95693707-BD9E-49EA-A67C-5AC802B4674B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{95693707-BD9E-49EA-A67C-5AC802B4674B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{95693707-BD9E-49EA-A67C-5AC802B4674B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{95693707-BD9E-49EA-A67C-5AC802B4674B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

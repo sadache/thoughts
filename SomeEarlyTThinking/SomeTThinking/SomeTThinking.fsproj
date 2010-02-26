@@ -36,12 +36,10 @@
     <Compile Include="UsefulStuff.fs" />
     <Compile Include="Exp.fs" />
     <Compile Include="Module1.fs" />
-    <None Include="Script.fsx" />
     <None Include="Tests.fsx" />
     <None Include="TestScenarios.fsx" />
     <Compile Include="TestScenarios.fs" />
     <None Include="ThreadPoolConfig.fsx" />
-    <None Include="TestWithRemoteStore.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
@@ -52,13 +50,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Agents\Agents.fsproj">
-      <Name>Agents</Name>
-      <Project>{95693707-bd9e-49ea-a67c-5ac802b4674b}</Project>
-      <Private>True</Private>
-    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.
