@@ -2,6 +2,7 @@ module Module1
 open System
 open System.Collections.Generic
 open Exp
+open ExpStore
 open UsefulStuff
 open AgentSystem.LAgent
 
@@ -15,12 +16,6 @@ let mutable evaluatedCells=0
 let referenceDate= DateTime(2010,1,1).AddMonths(-1)
 let monthsAway (date:DateTime)= 12 * (date.Year - referenceDate.Year) + date.Month - referenceDate.Month
 
-let buildContextKey rawkey  =
-             function Cell(ds) -> String.Format("{0}.{1}.{2}", ds.entity.name, rawkey, ds.date)
-                      |Partial ods -> 
-                        String.Format("{0}.{1}", defaultArg ods.entityType "_", rawkey)
-                      | Global -> rawkey
-
 
 type Env= {bindigs:Map<Name,Value> ; context: ExecutionContext}
 
@@ -28,25 +23,7 @@ and Value= DoubleVal of double
             |BoolVal of bool
             |FunVal of Env * Name * Exp
 
-type CalcStore=Dictionary<string,Exp>
 type QualifiedName=  ExecutionContext * String
-open Microsoft.FSharp.Control
-let rec collectExDependencies exp (ctxt:ExecutionContext)= 
-        let rec collect dependencies= 
-                   function |_ when not (ctxt.IsConsistent) -> dependencies
-                            |Const _|ConstB _| Binding _ |Context _->  dependencies
-                            |Ref(name,trans)->  (name,trans ctxt)::dependencies
-                            |BinaryExp(_,e1,e2) |App (e1,e2)-> collect (collect dependencies e1) e2
-                            |Fun(_,e) ->  collect dependencies e
-                            |Children(fold, e) -> 
-                                            let dims, entitydepFun  = match ctxt with CellContext(d, entitydepFun) -> d, entitydepFun
-                                            let (_,Owns(ownership)) =ctxt.EntityDependencies 
-                                            in List.fold (fun ds (owned,_)-> let newCtx = CellContext({dims with entity=owned}, entitydepFun)
-                                                                             in ds @ (collectExDependencies e newCtx) ) dependencies ownership  
-                            |If (condition,_,_) -> collect dependencies condition
-        collect [] exp
-                     
-let mutable isOk= 0
 
 let rec eval (env :Env) = 
   let app op a b = match(eval env a,eval env b) with
@@ -64,7 +41,7 @@ let rec eval (env :Env) =
                                 (gotogetValue name trans env)  
              |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
                                     let (_,Owns(ownership)) =env.context.EntityDependencies 
-                                    let childrenEvaluated= let map= if(true)then let _= isOk<-isOk+1 in Parallels.map else Seq.map
+                                    let childrenEvaluated= let map= if(true) then Parallels.map else Seq.map
                                                            in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned}, entitydepFun)
                                                                                      let newEnv= {env with context= newCtx}
                                                                                      in((eval newEnv e),r) ) ownership                                      
@@ -91,12 +68,11 @@ let rec eval (env :Env) =
 
 and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
                                         if(not(newEnv.context.IsConsistent)) then DoubleVal 0.
-                                        else let task= (storeCache (name, newEnv.context) newEnv.bindigs )
-                                             in (snd <| task.Force())
+                                        else let lazyValue= (storeCache (name, newEnv.context) newEnv.bindigs )
+                                             in (snd <| lazyValue.Force())
 
-and calcStore= new Dictionary<string,Exp>()
-and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
-and qualifiedKey (context,key)= buildContextKey key context
+
+
 
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Set<string>*Value>>(100,10000) 
 

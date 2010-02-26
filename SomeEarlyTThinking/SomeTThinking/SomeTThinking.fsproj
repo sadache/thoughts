@@ -35,6 +35,7 @@
   <ItemGroup>
     <Compile Include="UsefulStuff.fs" />
     <Compile Include="Exp.fs" />
+    <Compile Include="ExpStore.fs" />
     <Compile Include="Module1.fs" />
     <None Include="Script.fsx" />
     <None Include="Tests.fsx" />
@@ -42,6 +43,7 @@
     <Compile Include="TestScenarios.fs" />
     <None Include="ThreadPoolConfig.fsx" />
     <None Include="TestWithRemoteStore.fsx" />
+    <Compile Include="ExpressionDependencyAnalyses.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
