@@ -6,6 +6,7 @@ open System
 
 open ConsoleApplication14
 open Exp
+open ExpStore
 open Module1
 
 

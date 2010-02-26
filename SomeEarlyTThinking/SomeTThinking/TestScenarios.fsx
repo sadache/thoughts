@@ -1,15 +1,16 @@
 ﻿#r "Dependencies/ConsoleApplication14.dll"
-#load "../Agents/AgentSystem.fs"
 #load "UsefulStuff.fs"
 #load "Exp.fs"
+#load "ExpStore.fs"
 #load "Module1.fs"
+
 
 // Samples
 open System
 open ConsoleApplication14
 open Exp
 open Module1
-
+open ExpStore
 
 let bindings0= Map.empty
 let env0With context= {bindigs= bindings0; context=context}

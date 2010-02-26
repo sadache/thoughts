@@ -3,6 +3,7 @@ open System
 open System.Collections.Generic
 open Exp
 open UsefulStuff
+open ExpStore
 
 let  minT:int ref =ref 0
 let  minIOT:int ref =ref 0
@@ -77,18 +78,17 @@ and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans en
                                         else let task= (storeCache (name, newEnv.context) newEnv.bindigs )
                                              in ( task.Force())
 
-and calcStore= new Dictionary<string,Exp>()
-and getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then Some calcStore.[qualifiedKey] else None
-and qualifiedKey (context,key)= buildContextKey key context
 
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Value>>(100,10000) 
 
-and storeCache (key,context) env :Lazy<Value>=     
-    let qualifiedKey= match context with CellContext(ds,_)-> buildContextKey key (Cell(ds))
+and storeCache (key,context) env :Lazy<Value>= 
+    let ds= match context with CellContext(dimensions,_)->dimensions
+    let cacheKey= match context with CellContext(ds,_)->String.Format("{0}.{1}.{2}", ds.entity.name, key, ds.date)
     let valueFactory= fun k->lazy(let entityT= match context with CellContext(ds,_)->ds.entity.etype 
-                                  let partialKey= buildContextKey key (Partial {entityType=Some entityT})
-                                  let exp= getCalcFromStore qualifiedKey |> getOrElse <| lazy((getCalcFromStore partialKey) |> getOrElse <| lazy( defaultArg (getCalcFromStore key) (Const 0.)))
+                                  let exp=  (getExpFromStore key  (Cell ds))  |> getOrElse 
+                                            <| lazy((getExpFromStore key (Partial {entityType=Some entityT})) |> getOrElse 
+                                            <| lazy( defaultArg (getExpFromStore key Global) (Const 0.)))
                                   let newEnv={bindigs=env ;context=context}
                                   in eval newEnv exp)
-    in cache.GetOrAdd(qualifiedKey,valueFactory)
+    in cache.GetOrAdd(cacheKey,valueFactory)
 
