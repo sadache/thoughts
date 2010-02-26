@@ -1,5 +1,0 @@
-D:\EveningWork\t-thoughts-with-redis\SomeEarlyTThinking\Agents\bin\Release\Agents.dll
-D:\EveningWork\t-thoughts-with-redis\SomeEarlyTThinking\Agents\bin\Release\Agents.pdb
-D:\EveningWork\t-thoughts-with-redis\SomeEarlyTThinking\Agents\obj\Release\ResolveAssemblyReference.cache
-D:\EveningWork\t-thoughts-with-redis\SomeEarlyTThinking\Agents\obj\Release\Agents.dll
-D:\EveningWork\t-thoughts-with-redis\SomeEarlyTThinking\Agents\obj\Release\Agents.pdb
