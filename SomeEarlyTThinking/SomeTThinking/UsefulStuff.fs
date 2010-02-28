@@ -4,6 +4,7 @@ let getOrElse o (a:'a Microsoft.FSharp.Control.Lazy)= if(Option.isSome o) then o
 let curry2 f = fun a b -> f(a,b)
 let reverse f = fun b a-> f a b
 let id i=i
+let force:Microsoft.FSharp.Control.Lazy<'a>-> 'a= fun l -> l.Force()
  
 
 module Parallels=

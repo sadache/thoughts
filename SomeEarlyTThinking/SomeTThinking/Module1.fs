@@ -40,7 +40,7 @@ let rec eval (env :Env) =
                                                 |Month ,CellContext(ds,_) ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
                                                                                                        
              |Ref(name,trans)-> evaluatedCells <- evaluatedCells+1
-                                (gotogetValue name trans env)  
+                                defaultArg (gotogetValue name trans env) <| DoubleVal 0. 
              |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
                                     let (_,Owns(ownership)) =env.context.EntityDependencies 
                                     let childrenEvaluated= let map= if(true) then Parallels.map else Seq.map
@@ -69,21 +69,21 @@ let rec eval (env :Env) =
                                  |somethingElse -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , somethingElse ))
 
 and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
-                                        if(not(newEnv.context.IsConsistent)) then DoubleVal 0.
+                                        if(not(newEnv.context.IsConsistent)) then None
                                         else let lazyValue= (storeCache (name, newEnv.context) newEnv.bindigs )
-                                             in (snd <| lazyValue.Force())
+                                             in Option.map  snd (lazyValue.Force()) 
 
 
 
 
-and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Set<string>*Value>>(100,10000) 
+and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Option<Set<string>*Value>>>(100,10000) 
 
-and storeCache (key,context) env :Lazy<Set<string>*Value>=     
+and storeCache (key,context) env :Lazy<Option<Set<string>*Value>>=     
     let cacheKey= match context with CellContext(ds,_)->String.Format("{0}.{1}.{2}", ds.entity.name, key, ds.date)
     let ds= match context with CellContext(dimensions,_)->dimensions
-    let valueFactory= fun k->lazy(let exp=  List.tryPick (getExpFromStore key) (searchHierarchy ds) |> defaultArg <| Const 0.    
+    let valueFactory= fun k->lazy(let exp=  List.tryPick (getExpFromStore key) (searchHierarchy ds)     
                                   let newEnv={bindigs=env ;context=context}
-                                  in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp))
+                                  in Option.map (fun exp-> (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp)) exp)
     in cache.GetOrAdd(cacheKey,valueFactory)
                                                               
 //and worker = spawnParallelWorker (fun f -> //printfn "doing some Work"
