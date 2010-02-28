@@ -38,8 +38,8 @@
     <Compile Include="Module1.fs" />
     <None Include="Script.fsx" />
     <None Include="Tests.fsx" />
-    <None Include="TestScenarios.fsx" />
     <Compile Include="TestScenarios.fs" />
+    <None Include="TestScenarios.fsx" />
     <None Include="ThreadPoolConfig.fsx" />
     <None Include="TestWithRemoteStore.fsx" />
   </ItemGroup>
