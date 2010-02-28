@@ -121,12 +121,12 @@ let work=fun ()->let _=cache.Clear()
                  let res = eval (env0With ctx) exp
                  //let store=calcStore
                  let _=sw.Stop()
-                 in (sw.ElapsedMilliseconds,evaluatedCells)
+                 in (sw.ElapsedMilliseconds)
 
 //Console.WriteLine(sw.ElapsedMilliseconds)
 //Console.WriteLine((match res with DoubleVal(d)->d |_ -> -1.).ToString())
 List.iter (fun _ -> Console.WriteLine( work())
-                    evaluatedCells<-0) (List.replicate 100 1) 
+                    ) (List.replicate 100 1) 
 Console.ReadKey() |> ignore
 
 

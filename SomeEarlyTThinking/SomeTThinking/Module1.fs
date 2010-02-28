@@ -12,7 +12,7 @@ let _= System.Threading.ThreadPool.GetMinThreads(minT,minIOT)
 let _= System.Threading.ThreadPool.SetMinThreads(100,minIOT.contents)
 
 
-let mutable evaluatedCells=0
+
 let referenceDate= DateTime(2010,1,1).AddMonths(-1)
 let monthsAway (date:DateTime)= 12 * (date.Year - referenceDate.Year) + date.Month - referenceDate.Month
 
@@ -39,8 +39,7 @@ let rec eval (env :Env) =
                 match dimension,env.context with Year ,CellContext(ds,_) ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Year)) 
                                                 |Month ,CellContext(ds,_) ->  DoubleVal (Convert.ToDouble( referenceDate.AddMonths(ds.date).Month)) 
                                                                                                        
-             |Ref(name,trans)-> evaluatedCells <- evaluatedCells+1
-                                defaultArg (gotogetValue name trans env) <| DoubleVal 0. 
+             |Ref(name,trans)-> defaultArg (gotogetValue name trans env) <| DoubleVal 0. 
              |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
                                     let (_,Owns(ownership)) =env.context.EntityDependencies 
                                     let childrenEvaluated= let map= if(true) then Parallels.map else Seq.map
