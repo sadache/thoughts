@@ -1,0 +1,80 @@
+﻿Lexer.fsl
+{
+(***
+   All code between the two curly braces will be spit directly into
+   the generated code file.
+***)
+ 
+open System
+ 
+open Exp
+ 
+// These two modules define goo needed to use fslex
+open Lexing
+ 
+let inc_lnum bol pos =
+  let lnum = pos.pos_lnum in
+  {pos with pos_lnum =  lnum+1; pos_bol = bol }
+ 
+let newline lexbuf =
+  lexbuf_set_curr_p lexbuf
+    ( inc_lnum (lexeme_end lexbuf) (lexeme_end_p lexbuf))
+ 
+}
+ 
+// Base regular expressions
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+ 
+rule parsetokens = parse
+// ----------------------------
+| whitespace      { parsetokens lexbuf }
+| newline         { newline lexbuf; parsetokens lexbuf }
+// ----------------------------
+| ['-']?digit+  { INT (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf)) }
+// ----------------------------
+| "pi"            { PI }
+| "e"             { E }
+// ----------------------------
+| "sin"           { SIN }
+| "cos"           { COS }
+| "tan"           { TAN }
+// ----------------------------
+| "+"             { PLUS }
+| "-"             { DASH }
+| "*"             { ASTERISK }
+| "/"             { SLASH }
+| "^"             { CARET }
+| "("             { LPAREN }
+| ")"             { RPAREN }
+// ----------------------------
+| eof             { EOF }
+
+// another sample
+{
+
+open System
+open Parser
+open Lexing
+
+}
+
+// These are some regular expression definitions
+let digit = ['0'-'9']
+let whitespace = [' ' '\t' ]
+let newline = ('\n' | '\r' '\n')
+
+rule tokenize = parse
+| whitespace	{ tokenize lexbuf }
+| newline       { tokenize lexbuf }
+// Operators
+| "+"			{ PLUS }
+| "-"			{ MINUS }
+| "*"			{ ASTER }
+| "/"			{ SLASH }
+// Numberic constants
+| ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }
+| ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf)) }
+| eof   { EOF }

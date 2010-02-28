@@ -44,6 +44,8 @@
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
     <Compile Include="TestScenarios.fs" />
+    <None Include="Formulas.fsl" />
+    <None Include="Formulas.fsy" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
