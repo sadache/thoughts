@@ -28,9 +28,8 @@ and Dimensions = {entity :Entity ;date: DateD}
 type AttachementLevel=Cell of Dimensions 
                       |Partial of PartialDimensions
                       | Global 
-
-
-and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) }                   
+and PartialDimensions={entityType:EntityType Option(* ; add other optional dimensions *) } 
+                  
 
 and ContextTrans = ExecutionContext -> ExecutionContext
 type Name= string

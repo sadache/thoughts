@@ -12,7 +12,7 @@ open ExpStore
 
 
 let bindings0= Map.empty
-let env0With context= {bindigs= bindings0; context=context}
+let env0With context=  {bindigs= bindings0; context=context}
 
 let entityGraph = EntityDependencyGraph()
 
@@ -111,7 +111,7 @@ Seq.iter (fun (c:ImportedRow) ->
 
 
 //
-let work=fun ()->let _=cache.Clear()
+let work=fun ()->let _=clearCache()
                  let ctx = (cellCtx (entityWithName "XF_DE001") 120)
                  //let dps=entityGraph
                  let exp = ((local "RESULT_FIN"))

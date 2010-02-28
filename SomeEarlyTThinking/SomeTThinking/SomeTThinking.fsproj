@@ -36,6 +36,7 @@
     <Compile Include="UsefulStuff.fs" />
     <Compile Include="Exp.fs" />
     <Compile Include="ExpStore.fs" />
+    <Compile Include="Module1.fsi" />
     <Compile Include="Module1.fs" />
     <None Include="Script.fsx" />
     <None Include="Tests.fsx" />

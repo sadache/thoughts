@@ -68,15 +68,13 @@ let rec eval (env :Env) =
                                  |somethingElse -> raise <| InvalidProgramException(String.Format ( "{0} is not a function to be applied" , somethingElse ))
 
 and gotogetValue name trans (env:Env) = let newEnv = {env with  context=trans env.context }
-                                        if(not(newEnv.context.IsConsistent)) then None
+                                        if not(newEnv.context.IsConsistent) then None
                                         else let lazyValue= (storeCache (name, newEnv.context) newEnv.bindigs )
                                              in Option.map  snd (lazyValue.Force()) 
-
-
-
+                                             
 
 and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Option<Set<string>*Value>>>(100,10000) 
-
+and clearCache= cache.Clear
 and storeCache (key,context) env :Lazy<Option<Set<string>*Value>>=     
     let cacheKey= match context with CellContext(ds,_)->String.Format("{0}.{1}.{2}", ds.entity.name, key, ds.date)
     let ds= match context with CellContext(dimensions,_)->dimensions
@@ -85,6 +83,23 @@ and storeCache (key,context) env :Lazy<Option<Set<string>*Value>>=
                                   in Option.map (fun exp-> (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp)) exp)
     in cache.GetOrAdd(cacheKey,valueFactory)
                                                               
+
+let collectExDependencies exp dimensions dependencyFunction= 
+        let rec collect dependencies (ctxt:ExecutionContext)= 
+            let collectInCtxt dependencies=collect dependencies ctxt
+            in     function |_ when not (ctxt.IsConsistent) -> dependencies
+                            |Const _|ConstB _| Binding _ |Context _->  dependencies
+                            |Ref(name,trans)->  (name,trans ctxt)::dependencies
+                            |BinaryExp(_,e1,e2) |App (e1,e2)-> collectInCtxt (collectInCtxt dependencies e1) e2 
+                            |Fun(_,e) ->  collect dependencies ctxt e 
+                            |Children(fold, e) -> 
+                                            let dims, entitydepFun  = match ctxt with CellContext(d, entitydepFun) -> d, entitydepFun
+                                            let (_,Owns(ownership)) =ctxt.EntityDependencies 
+                                            in List.fold (fun ds (owned,_)-> let newCtx = CellContext({dims with entity=owned}, entitydepFun)
+                                                                             in (collect ds newCtx e) ) dependencies ownership  
+                            |If (condition,_,_) -> collect dependencies ctxt condition
+        
+        collect [] (CellContext(dimensions,dependencyFunction)) exp
 //and worker = spawnParallelWorker (fun f -> //printfn "doing some Work"
  //                                          f()) 10
 (* open AgentSystem.LAgent
