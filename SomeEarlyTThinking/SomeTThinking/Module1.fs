@@ -25,6 +25,8 @@ and Value= DoubleVal of double
 
 type QualifiedName=  ExecutionContext * String
 
+let searchHierarchy ds= [ Cell ds ; Partial {entityType=Some ds.entity.etype };Global]
+
 let rec eval (env :Env) = 
   let app op a b = match(eval env a,eval env b) with
                          DoubleVal(d1),DoubleVal(d2)->  (op d1 d2)
@@ -79,12 +81,7 @@ and cache= System.Collections.Concurrent. ConcurrentDictionary<string,Lazy<Set<s
 and storeCache (key,context) env :Lazy<Set<string>*Value>=     
     let cacheKey= match context with CellContext(ds,_)->String.Format("{0}.{1}.{2}", ds.entity.name, key, ds.date)
     let ds= match context with CellContext(dimensions,_)->dimensions
-    let valueFactory= fun k->lazy(let entityT= match context with CellContext(ds,_)->ds.entity.etype 
-                                  let partialKey= buildContextKey key (Partial {entityType=Some entityT})
-                                  let exp=  (getExpFromStore key  (Cell ds))  |> getOrElse 
-                                            <| lazy((getExpFromStore key (Partial {entityType=Some entityT})) |> getOrElse 
-                                            <| lazy( defaultArg (getExpFromStore key Global) (Const 0.)))
-    
+    let valueFactory= fun k->lazy(let exp=  List.tryPick (getExpFromStore key) (searchHierarchy ds) |> defaultArg <| Const 0.    
                                   let newEnv={bindigs=env ;context=context}
                                   in (Set.empty(*Set.ofList(List.map (fun (key,cxt)->buildContextKey key cxt) dependencies)*),eval newEnv exp))
     in cache.GetOrAdd(cacheKey,valueFactory)
