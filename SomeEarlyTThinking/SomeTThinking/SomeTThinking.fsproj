@@ -44,12 +44,18 @@
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
     <Compile Include="TestScenarios.fs" />
-    <None Include="Formulas.fsl" />
-    <None Include="Formulas.fsy" />
+    <None Include="FormulasLexer.fsl" />
+    <None Include="FormulasParser.fsy" />
+    <Compile Include="FormulasParser.fsi" />
+    <Compile Include="FormulasLexer.fs" />
+    <Compile Include="FormulasParser.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">
       <HintPath>Dependencies\ConsoleApplication14.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.PowerPack">
+      <HintPath>Dependencies\FSharp.PowerPack.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
