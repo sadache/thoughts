@@ -19,8 +19,13 @@ rule tokenize = parse
 | "+"			{ PLUS }
 | "-"			{ MINUS }
 | "*"			{ ASTER }
+| "\ooo/"		{Children} //like Sum( \ooo/ &RENT)
 | "/"			{ SLASH }
+
 // Numberic constants
 | ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }
 | ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf)) }
 | eof   { EOF }
+
+// Cell References
+| &[A-Z]+    {}
