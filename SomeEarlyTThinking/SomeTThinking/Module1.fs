@@ -52,7 +52,7 @@ let rec eval (env :Env) =
                                           Sum ->  DoubleVal( Seq.fold (fun (s) (DoubleVal(d1),rate) ->  s + d1*rate ) 0. (childrenEvaluated))
                                           | Avg -> raise(Exception())
 
-             |BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> (*) |Minus -> (-)| Min -> min | Max -> max 
+             |BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> ( * ) |Minus -> (-)| Min -> min | Max -> max 
                                               in DoubleVal(app op e1 e2)
              |BinaryExp (ComparaOp o, e1,e2)-> let op = match o with Equals -> (=) |Greater -> (>) | GreaterOrEq -> (>=) 
                                                in BoolVal(app op e1 e2)
