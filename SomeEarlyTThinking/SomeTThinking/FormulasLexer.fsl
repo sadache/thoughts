@@ -28,4 +28,4 @@ rule tokenize = parse
 | eof   { EOF }
 
 // Cell References
-| &[A-Z]+    {}
+| ['&']['A'-'B']+    {REF (lexeme lexbuf)}
