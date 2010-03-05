@@ -1,7 +1,5 @@
 ﻿%{
-
 open Exp
-
 %}
 
 // The start token becomes a parser function in the compiled code:
@@ -9,9 +7,10 @@ open Exp
 
 // These are the terminal tokens of the grammar along with the types of
 // the data carried by each token:
-%token <System.Int32> INT32
+//%token <System.Int32> INT32
 %token <System.Double> FLOAT
-%token PLUS MINUS ASTER	SLASH
+%token <System.String> REF
+%token PLUS MINUS ASTER	SLASH CHILDREN
 %token EOF
 
 // This is the type of the data produced by a successful reduction of the 'start'
@@ -23,21 +22,17 @@ open Exp
 // These are the rules of the grammar along with the F# code of the 
 // actions executed as rules are reduced.  In this case the actions 
 // produce data using F# data construction terms.
-start: Prog { Equation($1) }
+start: Prog { $1 }
 
 Prog:
 	| Expr EOF					{ $1 }
 
 Expr: 
-    | Expr PLUS Term			{ BinaryExp(Plus,$1, $3) }
-    | Expr MINUS Term			{  BinaryExp(Minus,$1, $3) }
-    | Term						{ Term($1) }
-
-Term:
-	| Term ASTER Factor			{  BinaryExp(Times,$1, $3) }
-	| Term SLASH Factor			{  BinaryExp(Divide,$1, $3) }
-	| Factor					{ Factor($1) }
+    | Expr PLUS Expr			{ BinaryExp(DoubleOp Plus,$1, $3) }
+    | Expr MINUS Expr			{  BinaryExp(DoubleOp Minus,$1, $3) }
+    | Expr ASTER Expr			{  BinaryExp(DoubleOp Times,$1, $3) }
+	//| Expr SLASH Expr			{  BinaryExp(DoubleOp Divide,$1, $3) }
 	
-Factor:
-	| FLOAT						{ Float($1) }
-	| INT32						{ Integer($1) }
+	| FLOAT						{ Const($1) }
+	//| INT32						{ Const($1) }
+

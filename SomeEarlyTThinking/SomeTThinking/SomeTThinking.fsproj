@@ -44,11 +44,18 @@
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
     <Compile Include="TestScenarios.fs" />
-    <None Include="FormulasLexer.fsl" />
-    <None Include="FormulasParser.fsy" />
+  <FsYacc Include="FormulasParser.fsy">
+      <OtherFlags>--module FormulasParser</OtherFlags>
+    </FsYacc>
+
+    <FsLex Include="FormulasLexer.fsl" >
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>    
+
+
     <Compile Include="FormulasParser.fsi" />
-    <Compile Include="FormulasLexer.fs" />
     <Compile Include="FormulasParser.fs" />
+    <Compile Include="FormulasLexer.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">

@@ -1,9 +1,10 @@
-﻿
-{
-
+﻿{
+module FormulasLexer
 open System
-open Parser
-open Lexing
+open FormulasParser
+open Microsoft.FSharp.Text.Lexing
+
+let lexeme  = LexBuffer<_>.LexemeString
 
 }
 
@@ -19,11 +20,11 @@ rule tokenize = parse
 | "+"			{ PLUS }
 | "-"			{ MINUS }
 | "*"			{ ASTER }
-| "\ooo/"		{Children} //like Sum( \ooo/ &RENT)
-| "/"			{ SLASH }
+| "\ooo/"		{CHILDREN} //like Sum( \ooo/ &RENT)
+//| "/"			{ SLASH }
 
 // Numberic constants
-| ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }
+//| ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }
 | ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf)) }
 | eof   { EOF }
 
