@@ -42,7 +42,7 @@ Expr:
 	//| Expr SLASH Expr			{  BinaryExp(DoubleOp Divide,$1, $3) }
 
 	| CHILDREN Expr				{ Children(Sum, $2) }
-	| REF						{Ref ($1,id)}
+	| REF						{Ref ($1.Substring(1),id)}
 	| FLOAT						{ Const($1) }
 	//| INT32						{ Const($1) }
 

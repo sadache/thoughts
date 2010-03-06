@@ -225,7 +225,7 @@ let _fsyacc_reductions ()  =    [|
                 (
                    (
 # 45 "FormulasParser.fsy"
-                                  Ref (_1,id)
+                                  Ref (_1.Substring(1),id)
                    )
 # 45 "FormulasParser.fsy"
                  : 'Expr));

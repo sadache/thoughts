@@ -32,5 +32,5 @@ rule tokenize = parse
 
 
 // Cell References
-| ['&']['A'-'Z']+    {REF (lexeme lexbuf)}
+| ['&']['A'-'Z''_']+    {REF (lexeme lexbuf)}
 | eof   { EOF }
