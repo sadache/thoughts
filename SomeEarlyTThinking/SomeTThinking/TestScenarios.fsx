@@ -1,15 +1,24 @@
 ﻿#r "Dependencies/ConsoleApplication14.dll"
+#r "Dependencies/FSharp.PowerPack.dll"
 #load "../Agents/AgentSystem.fs"
 #load "UsefulStuff.fs"
 #load "Exp.fs"
+#load "ExpStore.fs"
 #load "Module1.fs"
+#load "FormulasParser.fs"
+#load "FormulasLexer.fs"
+
 
 // Samples
 open System
 open ConsoleApplication14
 open Exp
 open Module1
+open FormulasParser
+open FormulasLexer
 
+let lexbuff = Lexing.LexBuffer<char>.FromString "\ooo/ 1.2 * 1 + &RENT"
+let equation = FormulasParser.start FormulasLexer.tokenize lexbuff
 
 let bindings0= Map.empty
 let env0With context= {bindigs= bindings0; context=context}

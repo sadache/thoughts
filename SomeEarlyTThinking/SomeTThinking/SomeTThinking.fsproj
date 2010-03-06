@@ -37,7 +37,7 @@
   
 <ItemGroup>
 <FsYacc Include="FormulasParser.fsy">
-      <OtherFlags>--module FormulasParser</OtherFlags>
+      <OtherFlags>--module FormulasParser --open Exp</OtherFlags>
     </FsYacc>
 
     <FsLex Include="FormulasLexer.fsl" >
