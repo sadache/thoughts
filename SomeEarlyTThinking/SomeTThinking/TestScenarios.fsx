@@ -17,7 +17,7 @@ open Module1
 open FormulasParser
 open FormulasLexer
 
-let lexbuff = Lexing.LexBuffer<char>.FromString "\ooo/ 1.2 * 1 + &RENT"
+let lexbuff = Lexing.LexBuffer<char>.FromString " (\ooo/ 1.2 * (1 + &RENT)) "
 let equation = FormulasParser.start FormulasLexer.tokenize lexbuff
 
 let bindings0= Map.empty

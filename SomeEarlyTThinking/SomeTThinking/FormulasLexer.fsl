@@ -18,6 +18,8 @@ rule tokenize = parse
 | whitespace	{ tokenize lexbuf }
 | newline       { tokenize lexbuf }
 // Operators
+| "("			{ LPAREN }
+| ")"			{ RPAREN }
 | "+"			{ PLUS }
 | "-"			{ MINUS }
 | "*"			{ ASTER }
