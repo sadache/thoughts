@@ -13,6 +13,7 @@
 open System
 open ConsoleApplication14
 open Exp
+open ExpStore
 open Module1
 open FormulasParser
 open FormulasLexer
