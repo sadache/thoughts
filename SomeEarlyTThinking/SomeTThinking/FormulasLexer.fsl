@@ -25,6 +25,11 @@ rule tokenize = parse
 | "*"			{ ASTER }
 | "\ooo/"		{CHILDREN} //like Sum( \ooo/ &RENT)
 //| "/"			{ SLASH }
+//Conditionals
+| "if"			{IF}
+| "then"			{THEN}
+| "else"			{ELSE}
+
 
 // Numberic constants
 //| ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }

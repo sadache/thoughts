@@ -3,6 +3,9 @@ module FormulasParser
 open Exp
 type token = 
   | EOF
+  | IF
+  | THEN
+  | ELSE
   | LPAREN
   | RPAREN
   | PLUS
@@ -14,6 +17,9 @@ type token =
   | FLOAT of (System.Double)
 type tokenId = 
     | TOKEN_EOF
+    | TOKEN_IF
+    | TOKEN_THEN
+    | TOKEN_ELSE
     | TOKEN_LPAREN
     | TOKEN_RPAREN
     | TOKEN_PLUS
