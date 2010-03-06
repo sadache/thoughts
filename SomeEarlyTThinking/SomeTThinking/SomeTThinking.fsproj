@@ -31,8 +31,18 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
+
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
-  <ItemGroup>
+<Import Project="C:\Program Files\FSharpPowerPack-1.9.9.9\bin\FSharp.PowerPack.targets" /> 
+  
+<ItemGroup>
+<FsYacc Include="FormulasParser.fsy">
+      <OtherFlags>--module FormulasParser</OtherFlags>
+    </FsYacc>
+
+    <FsLex Include="FormulasLexer.fsl" >
+      <OtherFlags>--unicode</OtherFlags>
+    </FsLex>    
     <Compile Include="UsefulStuff.fs" />
     <Compile Include="Exp.fs" />
     <Compile Include="ExpStore.fs" />
@@ -44,13 +54,7 @@
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
     <Compile Include="TestScenarios.fs" />
-  <FsYacc Include="FormulasParser.fsy">
-      <OtherFlags>--module FormulasParser</OtherFlags>
-    </FsYacc>
-
-    <FsLex Include="FormulasLexer.fsl" >
-      <OtherFlags>--unicode</OtherFlags>
-    </FsLex>    
+  
 
 
     <Compile Include="FormulasParser.fsi" />

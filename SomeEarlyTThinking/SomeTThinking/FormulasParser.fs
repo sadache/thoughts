@@ -6,8 +6,9 @@ open Microsoft.FSharp.Text.Parsing.ParseHelpers
 # 1 "FormulasParser.fsy"
 
 open Exp
+open System
 
-# 9 "FormulasParser.fs"
+# 11 "FormulasParser.fs"
 // This type is the type of tokens accepted by the parser
 type token = 
   | EOF
@@ -113,7 +114,7 @@ let _fsyacc_reductionSymbolCounts = [|1us; 1us; 2us; 3us; 3us; 3us; 1us; |]
 let _fsyacc_productionToNonTerminalTable = [|0us; 1us; 2us; 3us; 3us; 3us; 3us; |]
 let _fsyacc_immediateActions = [|65535us; 49152us; 16385us; 65535us; 16386us; 65535us; 65535us; 65535us; 65535us; 65535us; 65535us; 16390us; |]
 let _fsyacc_reductions ()  =    [| 
-# 115 "FormulasParser.fs"
+# 117 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data :  Exp )) in
             Microsoft.FSharp.Core.Operators.box
@@ -122,77 +123,77 @@ let _fsyacc_reductions ()  =    [|
                       raise (Microsoft.FSharp.Text.Parsing.Accept(Microsoft.FSharp.Core.Operators.box _1))
                    )
                  : '_startstart));
-# 124 "FormulasParser.fs"
+# 126 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'Prog)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 25 "FormulasParser.fsy"
+# 26 "FormulasParser.fsy"
                                    _1 
                    )
-# 25 "FormulasParser.fsy"
+# 26 "FormulasParser.fsy"
                  :  Exp ));
-# 135 "FormulasParser.fs"
+# 137 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 28 "FormulasParser.fsy"
+# 29 "FormulasParser.fsy"
                                        _1 
                    )
-# 28 "FormulasParser.fsy"
+# 29 "FormulasParser.fsy"
                  : 'Prog));
-# 146 "FormulasParser.fs"
+# 148 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 31 "FormulasParser.fsy"
+# 32 "FormulasParser.fsy"
                                               BinaryExp(DoubleOp Plus,_1, _3) 
                    )
-# 31 "FormulasParser.fsy"
+# 32 "FormulasParser.fsy"
                  : 'Expr));
-# 158 "FormulasParser.fs"
+# 160 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 32 "FormulasParser.fsy"
+# 33 "FormulasParser.fsy"
                                                 BinaryExp(DoubleOp Minus,_1, _3) 
                    )
-# 32 "FormulasParser.fsy"
+# 33 "FormulasParser.fsy"
                  : 'Expr));
-# 170 "FormulasParser.fs"
+# 172 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             let _3 = (let data = parseState.GetInput(3) in (Microsoft.FSharp.Core.Operators.unbox data : 'Expr)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 33 "FormulasParser.fsy"
+# 34 "FormulasParser.fsy"
                                                 BinaryExp(DoubleOp Times,_1, _3) 
                    )
-# 33 "FormulasParser.fsy"
+# 34 "FormulasParser.fsy"
                  : 'Expr));
-# 182 "FormulasParser.fs"
+# 184 "FormulasParser.fs"
         (fun (parseState : Microsoft.FSharp.Text.Parsing.IParseState) ->
             let _1 = (let data = parseState.GetInput(1) in (Microsoft.FSharp.Core.Operators.unbox data : System.Double)) in
             Microsoft.FSharp.Core.Operators.box
                 (
                    (
-# 36 "FormulasParser.fsy"
+# 37 "FormulasParser.fsy"
                                      Const(_1) 
                    )
-# 36 "FormulasParser.fsy"
+# 37 "FormulasParser.fsy"
                  : 'Expr));
 |]
-# 194 "FormulasParser.fs"
+# 196 "FormulasParser.fs"
 let tables () : Microsoft.FSharp.Text.Parsing.Tables<_> = 
   { reductions= _fsyacc_reductions ();
     endOfInputTag = _fsyacc_endOfInputTag;
