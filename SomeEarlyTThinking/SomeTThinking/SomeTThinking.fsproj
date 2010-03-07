@@ -31,18 +31,15 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
-
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" />
-<Import Project="C:\Program Files\FSharpPowerPack-1.9.9.9\bin\FSharp.PowerPack.targets" /> 
-  
-<ItemGroup>
-<FsYacc Include="FormulasParser.fsy">
+  <Import Project="C:\Program Files\FSharpPowerPack-1.9.9.9\bin\FSharp.PowerPack.targets" />
+  <ItemGroup>
+    <FsYacc Include="FormulasParser.fsy">
       <OtherFlags>--module FormulasParser --open Exp</OtherFlags>
     </FsYacc>
-
-    <FsLex Include="FormulasLexer.fsl" >
+    <FsLex Include="FormulasLexer.fsl">
       <OtherFlags>--unicode</OtherFlags>
-    </FsLex>    
+    </FsLex>
     <Compile Include="UsefulStuff.fs" />
     <Compile Include="Exp.fs" />
     <Compile Include="ExpStore.fs" />
@@ -53,13 +50,11 @@
     <None Include="ThreadPoolConfig.fsx" />
     <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
-    <Compile Include="TestScenarios.fs" />
-  
-
-
     <Compile Include="FormulasParser.fsi" />
     <Compile Include="FormulasParser.fs" />
     <Compile Include="FormulasLexer.fs" />
+    <Compile Include="Commands.fs" />
+    <Compile Include="TestScenarios.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="ConsoleApplication14">

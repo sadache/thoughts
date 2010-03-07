@@ -7,7 +7,7 @@
 #load "Module1.fs"
 #load "FormulasParser.fs"
 #load "FormulasLexer.fs"
-
+#load "Commands.fs"
 
 // Samples
 open System
@@ -15,13 +15,10 @@ open ConsoleApplication14
 open Exp
 open ExpStore
 open Module1
-open FormulasParser
-open FormulasLexer
+open Commands
 
-
-let lexbuff1 = Lexing.LexBuffer<char>.FromString "if 1+2=3 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
-let lexbuff = Lexing.LexBuffer<char>.FromString "if year=2000 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
-let equation = FormulasParser.start FormulasLexer.tokenize lexbuff
+let exp1 =compile "if 1+2=3 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
+let exp2 = compile "if year=2000 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
 let bindings0= Map.empty
 let env0With context= {bindigs= bindings0; context=context}
 

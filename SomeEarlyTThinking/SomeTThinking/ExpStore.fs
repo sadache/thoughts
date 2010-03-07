@@ -13,3 +13,5 @@ let getCalcFromStore qualifiedKey= if calcStore.ContainsKey qualifiedKey then So
 let getExpFromStore natureName attachement= getCalcFromStore <| buildContextKey natureName attachement
 
 let qualifiedKey (context,key)= buildContextKey key context
+
+

@@ -8,7 +8,7 @@ open ConsoleApplication14
 open Exp
 open Module1
 open ExpStore
-
+open Commands
 
 
 let bindings0= Map.empty
