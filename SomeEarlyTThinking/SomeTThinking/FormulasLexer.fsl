@@ -23,18 +23,28 @@ rule tokenize = parse
 | "+"			{ PLUS }
 | "-"			{ MINUS }
 | "*"			{ ASTER }
+| "="			{ EQUALS }
+| "<="			{LESS_OR_EQUALS}
+| ">="			{GREATER_OR_EQUALS}
+| ">"			{ GREATER_THAN }
+| "<"			{ LESS_THAN}
 | "\ooo/"		{CHILDREN} //like Sum( \ooo/ &RENT)
 //| "/"			{ SLASH }
 //Conditionals
 | "if"			{IF}
-| "then"			{THEN}
-| "else"			{ELSE}
+| "then"		{THEN}
+| "else"		{ELSE}
+//Conditionals
+| "year"		{YEAR}
+| "month"		{MONTH}
 
 
 // Numberic constants
 //| ['-']?digit+  { INT32 (Int32.Parse(lexeme lexbuf)) }
 | ['-']?digit+('.'digit+)?(['e''E']digit+)?   { FLOAT (Double.Parse(lexeme lexbuf,CultureInfo.InvariantCulture.NumberFormat)) }
-
+//Boolean constants
+| "true"			{BOOL(true)}
+| "false"			{BOOL(false)}
 
 // Cell References
 | ['&']['A'-'Z''_']+    {REF (lexeme lexbuf)}

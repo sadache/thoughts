@@ -8,12 +8,20 @@ type token =
   | ELSE
   | LPAREN
   | RPAREN
+  | EQUALS
+  | LESS_OR_EQUALS
+  | GREATER_OR_EQUALS
+  | GREATER_THAN
+  | LESS_THAN
   | PLUS
   | MINUS
   | ASTER
   | SLASH
   | CHILDREN
+  | YEAR
+  | MONTH
   | REF of (System.String)
+  | BOOL of (System.Boolean)
   | FLOAT of (System.Double)
 type tokenId = 
     | TOKEN_EOF
@@ -22,12 +30,20 @@ type tokenId =
     | TOKEN_ELSE
     | TOKEN_LPAREN
     | TOKEN_RPAREN
+    | TOKEN_EQUALS
+    | TOKEN_LESS_OR_EQUALS
+    | TOKEN_GREATER_OR_EQUALS
+    | TOKEN_GREATER_THAN
+    | TOKEN_LESS_THAN
     | TOKEN_PLUS
     | TOKEN_MINUS
     | TOKEN_ASTER
     | TOKEN_SLASH
     | TOKEN_CHILDREN
+    | TOKEN_YEAR
+    | TOKEN_MONTH
     | TOKEN_REF
+    | TOKEN_BOOL
     | TOKEN_FLOAT
     | TOKEN_end_of_input
     | TOKEN_error
