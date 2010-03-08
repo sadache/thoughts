@@ -17,8 +17,10 @@ open ExpStore
 open Module1
 open Commands
 
-let exp1 =compile "if 1+2=3 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
-let exp2 = compile "if year=2000 then 1 + \ooo/ 1.2 * 1 + &RENT else 2 "
+let exp0 =compile "if 1+2=3 then 1 + (\ooo/ 1.2 )* 1 + previousMonth:&RENT +1 else 2 "
+let exp1 =compile "if 1+2=3 then 1 + (\ooo/ 1.2 )* 1 + &RENT else 2 "
+let exp2 = compile "if year=2000 then 1 + (\ooo/ 1.2) * 1 + &RENT else 2 "
+let exp3= compile "1+ if year=2000 then  \ooo/ &RENT * 0.8 else \ooo/ &RENT"
 let bindings0= Map.empty
 let env0With context= {bindigs= bindings0; context=context}
 

@@ -3,6 +3,9 @@ module FormulasParser
 open Exp
 type token = 
   | EOF
+  | PREVIOUS_MONTH
+  | PREVIOUS_YEAR
+  | COLON
   | IF
   | THEN
   | ELSE
@@ -25,6 +28,9 @@ type token =
   | FLOAT of (System.Double)
 type tokenId = 
     | TOKEN_EOF
+    | TOKEN_PREVIOUS_MONTH
+    | TOKEN_PREVIOUS_YEAR
+    | TOKEN_COLON
     | TOKEN_IF
     | TOKEN_THEN
     | TOKEN_ELSE
@@ -52,6 +58,7 @@ type nonTerminalId =
     | NONTERM_start
     | NONTERM_Prog
     | NONTERM_Expr
+    | NONTERM_Transition
 /// This function maps integers indexes to symbolic token ids
 val tagOfToken: token -> int
 

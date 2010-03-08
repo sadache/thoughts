@@ -16,12 +16,14 @@ open System
 %token EQUALS LESS_OR_EQUALS GREATER_OR_EQUALS GREATER_THAN LESS_THAN
 %token LPAREN RPAREN
 %token IF THEN ELSE
+%token PREVIOUS_MONTH PREVIOUS_YEAR COLON
 %token EOF
 %left IF THEN ELSE
 %left CHILDREN
 %nonassoc EQUALS LESS_OR_EQUALS GREATER_OR_EQUALS GREATER_THAN LESS_THAN
 %left PLUS MINUS 
 %left ASTER	SLASH
+%nonassoc COLON
 
 
 
@@ -51,9 +53,14 @@ Expr:
 
 	| IF Expr THEN Expr ELSE Expr  { If($2 , $4 , $6) }
 	| CHILDREN Expr				{ Children(Sum, $2) }
+	| Transition COLON REF 		{ Ref ($3.Substring(1),$1)}
 	| REF						{Ref ($1.Substring(1),id)}
 	| FLOAT						{ Const($1) }
 	//| INT32						{ Const($1) }
 	| BOOL						{ConstB($1)}
 	| YEAR						{Context Year}
 	| MONTH						{Context Month}
+
+Transition:
+	|PREVIOUS_MONTH				{previousMonth}
+	|PREVIOUS_YEAR				{previousYear}

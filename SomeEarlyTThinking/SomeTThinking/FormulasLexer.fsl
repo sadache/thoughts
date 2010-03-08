@@ -37,6 +37,10 @@ rule tokenize = parse
 //Conditionals
 | "year"		{YEAR}
 | "month"		{MONTH}
+//for transitions
+|"previousMonth" 		{PREVIOUS_MONTH}
+|"previousYear"		{PREVIOUS_YEAR}
+|":"				{COLON}
 
 
 // Numberic constants
