@@ -24,6 +24,13 @@ let exp0 =compile "if 1+2=3
 let exp1 =compile "if 1+2=3 then 1 + (\ooo/ 1.2 )* 1 + &RENT else 2 "
 let exp2 = compile "if year>2000 then 1 + (\ooo/ 1.2) * 1 + &RENT else 2 "
 let exp3= compile "1+ if year=2000 then  \ooo/ &RENT * 0.8 else \ooo/ &RENT"
+let exp4=compile("if previousMonth:&CARRYFWD + &RESULT_AT > 0 
+                  then min (previousMonth:&CARRYFWD + &RESULT_AT) &DIVID_REQ
+                  else 0")
+let exp4'=(If
+                                    ( (Ref("CARRYFWD", previousMonth) .+. local "RESULT_AT")  .>. Const(0.), 
+                                        minE (Ref("CARRYFWD", previousMonth) .+. local "RESULT_AT") (local "DIVID_REQ"), 
+                                        Const(0.)))
 let bindings0= Map.empty
 let env0With context= {bindigs= bindings0; context=context}
 
@@ -39,19 +46,18 @@ let define= calcStore.Add
 
 
 // IDX_CHG	[IDX_CHG (-1)]
-calcStore.Add (qualifiedKey (Global, "IDX_CHG") ,(Ref("IDX_CHG", previousMonth)))
+calcStore.Add (qualifiedKey (Global, "IDX_CHG") ,compile("previousMonth:&IDX_CHG"))
 
 // IDX_RENT	[IDX_RENT (-1)]
-calcStore.Add (qualifiedKey (Global, "IDX_RENT") ,(Ref("IDX_RENT", previousMonth)))
+calcStore.Add (qualifiedKey (Global, "IDX_RENT") ,compile("previousMonth:&IDX_RENT"))
 
 // CARRYFWD	[CARRYFWD (-1)]+[RESULT_AT]-[DIVID_PAY]
-calcStore.Add (qualifiedKey (Global, "CARRYFWD") ,(Ref("CARRYFWD", previousMonth) .+. local "RESULT_AT" .-. local "DIVID_PAY"))
+calcStore.Add (qualifiedKey (Global, "CARRYFWD") ,compile("previousMonth:&CARRYFWD + &RESULT_AT -&DIVID_PAY"))
 
 // DIVID_PAY	IIF([CARRYFWD (-1)]+[RESULT_AT]>0,fMIN([CARRYFWD (-1)]+[RESULT_AT],[DIVID_REQ]),0)
-calcStore.Add (qualifiedKey (Global, "DIVID_PAY") ,(If
-                                    ( (Ref("CARRYFWD", previousMonth) .+. local "RESULT_AT")  .>. Const(0.), 
-                                        minE (Ref("CARRYFWD", previousMonth) .+. local "RESULT_AT") (local "DIVID_REQ"), 
-                                        Const(0.))))
+calcStore.Add (qualifiedKey (Global, "DIVID_PAY") ,compile("if previousMonth:&CARRYFWD + &RESULT_AT > 0 
+                                                                then min (previousMonth:&CARRYFWD + &RESULT_AT) &DIVID_REQ
+                                                                else 0"))
 
 // RESULT_AT	IIF({Month}=12,[RESULT_BT_YTD]+[TAX_AMOUNT],0)
 calcStore.Add (qualifiedKey  (Global ,"RESULT_AT"), (If (Context Month .=. Const(12.), local "RESULT_BT_YTD" .+. local "TAX_AMOUNT", Const(0.))))

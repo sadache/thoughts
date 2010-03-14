@@ -12,7 +12,7 @@ open System
 %token <System.Boolean> BOOL
 %token <System.String> REF
 %token YEAR MONTH
-%token PLUS MINUS ASTER	SLASH CHILDREN
+%token PLUS MINUS ASTER	SLASH MIN CHILDREN
 %token EQUALS LESS_OR_EQUALS GREATER_OR_EQUALS GREATER_THAN LESS_THAN
 %token LPAREN RPAREN
 %token IF THEN ELSE
@@ -21,6 +21,7 @@ open System
 %left IF THEN ELSE
 %left CHILDREN
 %nonassoc EQUALS LESS_OR_EQUALS GREATER_OR_EQUALS GREATER_THAN LESS_THAN
+%left MIN
 %left PLUS MINUS 
 %left ASTER	SLASH
 %nonassoc COLON
@@ -47,6 +48,7 @@ Expr:
     | Expr MINUS Expr			{  BinaryExp(DoubleOp Minus,$1, $3) }
     | Expr ASTER Expr			{  BinaryExp(DoubleOp Times,$1, $3) }
 	//| Expr SLASH Expr			{  BinaryExp(DoubleOp Divide,$1, $3) }
+	| MIN Expr Expr				{  BinaryExp(DoubleOp Min,$2, $3)} 
 	| Expr EQUALS Expr			{ BinaryExp(ComparaOp Equals,$1, $3) }
     | Expr GREATER_OR_EQUALS Expr			{  BinaryExp(ComparaOp GreaterOrEq,$1, $3) }
     | Expr GREATER_THAN Expr			{  BinaryExp(ComparaOp Greater,$1, $3) }

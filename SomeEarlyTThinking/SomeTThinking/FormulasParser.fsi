@@ -20,6 +20,7 @@ type token =
   | MINUS
   | ASTER
   | SLASH
+  | MIN
   | CHILDREN
   | YEAR
   | MONTH
@@ -45,6 +46,7 @@ type tokenId =
     | TOKEN_MINUS
     | TOKEN_ASTER
     | TOKEN_SLASH
+    | TOKEN_MIN
     | TOKEN_CHILDREN
     | TOKEN_YEAR
     | TOKEN_MONTH

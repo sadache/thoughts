@@ -23,6 +23,7 @@ rule tokenize = parse
 | "+"			{ PLUS }
 | "-"			{ MINUS }
 | "*"			{ ASTER }
+| "min"			{ MIN }
 | "="			{ EQUALS }
 | "<="			{LESS_OR_EQUALS}
 | ">="			{GREATER_OR_EQUALS}
