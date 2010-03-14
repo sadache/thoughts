@@ -58,6 +58,7 @@ let rec eval (env :Env) =
                         | (ComparaOp o, DoubleVal d1,DoubleVal d2 ) -> getBoolOpFor o d1 d2
                         | (BoolOp o, e1,e2)-> raise(NotImplementedException())
                         | _ ->raise(InvalidOperationException())
+
              |If (condition , eThen , eElse)->match (eval env condition) with
                                                 BoolVal(res) -> if res then (eval env  eThen) else (eval env eElse)
                                                 |other-> raise(InvalidProgramException(String.Format ("{0} is not a boolean expression", ([|other|]:Object[]))))
