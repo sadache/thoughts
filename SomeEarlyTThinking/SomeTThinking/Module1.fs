@@ -23,16 +23,17 @@ and Value= DoubleVal of double
             |BoolVal of bool
             |FunVal of Env * Name * Exp
 
+let expectDouble=function DoubleVal d ->  d
+                          |other -> raise (InvalidOperationException("You are expecting a double but it was a"+ other.ToString())) 
+
 type QualifiedName=  ExecutionContext * String
 
 let searchHierarchy ds= [ Cell ds ; Partial {entityType=Some ds.entity.etype };Global]
-
+let lift2 f= fun c a b -> f(c a b) 
+let getDoubleOpFor=lift2 (DoubleVal) << ( function Plus -> (+) |Times -> (*) |Minus -> (-)| Min -> min | Max -> max) 
+let getBoolOpFor= lift2 (BoolVal) << function Equals -> (=) |Greater -> (>) | GreaterOrEq -> (>=) 
 let rec eval (env :Env) = 
-  let app op a b = match(eval env a,eval env b) with
-                         DoubleVal(d1),DoubleVal(d2)->  (op d1 d2)
-                         |v1,v2 -> raise <| InvalidProgramException(String.Format ( "cannot add apply {0} to {1} and {2} " , op,v1,v2 ))
-            
-  in function|_ when not env.context.IsConsistent -> DoubleVal 0.
+     function|_ when not env.context.IsConsistent -> DoubleVal 0.
              |Const d-> DoubleVal d
              |ConstB b-> BoolVal b
              |Context dimension-> 
@@ -43,20 +44,20 @@ let rec eval (env :Env) =
                                 (gotogetValue name trans env)  
              |Children(fold, e) ->  let ds, entitydepFun  = match env.context with CellContext(d, f) -> d, f
                                     let (_,Owns(ownership)) =env.context.EntityDependencies 
-                                    let childrenEvaluated= let map= if(true) then Parallels.map else Seq.map
+                                    let childrenEvaluated= let map= if(true) then Parallels.map1 else Seq.map
                                                            in  map  (fun(owned,r) -> let  newCtx = CellContext({ds with entity=owned}, entitydepFun)
                                                                                      let newEnv= {env with context= newCtx}
                                                                                      in((eval newEnv e),r) ) ownership                                      
                                                                         
                                     in match fold with
-                                          Sum ->  DoubleVal( Seq.fold (fun (s) (DoubleVal(d1),rate) ->  s + d1*rate ) 0. (childrenEvaluated))
-                                          | Avg -> raise(Exception())
-
-             |BinaryExp (DoubleOp o, e1,e2)-> let op = match o with Plus -> (+) |Times -> (*) |Minus -> (-)| Min -> min | Max -> max 
-                                              in DoubleVal(app op e1 e2)
-             |BinaryExp (ComparaOp o, e1,e2)-> let op = match o with Equals -> (=) |Greater -> (>) | GreaterOrEq -> (>=) 
-                                               in BoolVal(app op e1 e2)
-             |BinaryExp (BoolOp o, e1,e2)->  raise(NotImplementedException())
+                                          Sum ->  DoubleVal( Seq.fold (fun s (d,rate) ->  s + (expectDouble d)*rate ) 0. (childrenEvaluated))
+                                          | Avg -> raise(Exception())             
+             |BinaryExp (op, e1,e2)-> 
+                     match(op,eval env e1,eval env e2) with 
+                        | (DoubleOp o, DoubleVal d1 ,DoubleVal d2) -> getDoubleOpFor o d1 d2
+                        | (ComparaOp o, DoubleVal d1,DoubleVal d2 ) -> getBoolOpFor o d1 d2
+                        | (BoolOp o, e1,e2)-> raise(NotImplementedException())
+                        | _ ->raise(InvalidOperationException())
              |If (condition , eThen , eElse)->match (eval env condition) with
                                                 BoolVal(res) -> if res then (eval env  eThen) else (eval env eElse)
                                                 |other-> raise(InvalidProgramException(String.Format ("{0} is not a boolean expression", ([|other|]:Object[]))))
