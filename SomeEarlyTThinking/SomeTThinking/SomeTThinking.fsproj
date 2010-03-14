@@ -48,7 +48,6 @@
     <None Include="Tests.fsx" />
     <None Include="TestScenarios.fsx" />
     <None Include="ThreadPoolConfig.fsx" />
-    <None Include="TestWithRemoteStore.fsx" />
     <Compile Include="ExpressionDependencyAnalyses.fs" />
     <Compile Include="FormulasParser.fsi" />
     <Compile Include="FormulasParser.fs" />
